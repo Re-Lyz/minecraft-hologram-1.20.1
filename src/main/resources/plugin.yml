@@ -1,0 +1,26 @@
+name: hologram
+version: '${project.version}'
+main: com.heledron.hologram.HologramPlugin
+api-version: '1.20'
+
+commands:
+  items:
+    description: Open the items menu
+    permission: hologram.items
+  globe_settings:
+    description: Set globe settings
+    permission: hologram.globe_settings
+  globe_presets:
+    description: Set globe presets
+    permission: hologram.globe_presets
+
+permissions:
+  hologram.items:
+    description: Allows access to the items command
+    default: op
+  hologram.globe_settings:
+    description: Allows access to the globe_settings command
+    default: op
+  hologram.globe_presets:
+    description: Allows access to the globe_presets command
+    default: op
