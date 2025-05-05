@@ -55,6 +55,7 @@ class Globe {
     var blockRendererGridSize = 50
     var blockRendererMatchFunction = FindBlockWithColor.OKLAB_WITH_BRIGHTNESS
     var transform = Matrix4f()
+    var renderControls = true
 
     // shaders
     var dayTexture = GroundTexture.DAY
@@ -143,7 +144,7 @@ class Globe {
 
         return RenderGroup().apply {
             this[0] = sphere
-            this[1] = controls
+            if (renderControls) this[1] = controls
         }
     }
 
