@@ -33,7 +33,6 @@ class GlobeState {
     var rotation = 0f
     var cloudOffset = 0f
     var shaderTransition = .0
-    var lightDirection = 0f
     var shutDownTime = -1
     var ticksLived = 0
     val ui = GlobeUIState()
@@ -56,6 +55,7 @@ class Globe {
     var blockRendererMatchFunction = FindBlockWithColor.OKLAB_WITH_BRIGHTNESS
     var transform = Matrix4f()
     var renderControls = true
+    var lightDirection = 0f
 
     // shaders
     var dayTexture = GroundTexture.DAY
@@ -92,7 +92,7 @@ class Globe {
         cloudsNightTexture = cloudsNightTexture.image,
         cloudOffset = state.cloudOffset,
         cloudStrength = cloudStrength,
-        lightDirection = FORWARD_VECTOR.toVector3f().rotateY(-state.lightDirection + 180f.toRadians())
+        lightDirection = FORWARD_VECTOR.toVector3f().rotateY(-lightDirection + 180f.toRadians())
     )
 
     fun render(world: World, position: Vector): RenderGroup {
@@ -113,7 +113,7 @@ class Globe {
         )
 
         val sphere = if (renderer == RenderMode.TEXT) {
-            buildTextDisplayEntities(
+            buildTextDisplayGlobe(
                 world = world,
                 position = position,
                 transform = transform,

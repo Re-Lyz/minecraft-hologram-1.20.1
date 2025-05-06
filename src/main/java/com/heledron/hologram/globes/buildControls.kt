@@ -182,11 +182,11 @@ fun buildGlobeControls(
         order = 3,
         offset = .5f,
         state = globe.state.ui.lightDirectionSliderState,
-        progress = globe.state.lightDirection / 360f.toRadians(),
+        progress = globe.lightDirection / 360f.toRadians(),
         icon = ItemStack(Material.SUNFLOWER),
         onChange = { newValue, player ->
-            globe.state.lightDirection = newValue * 360f.toRadians()
-            player.sendActionBar("Light direction: ${globe.state.lightDirection.toDegrees().roundToInt()}°")
+            globe.lightDirection = newValue * 360f.toRadians()
+            player.sendActionBar("Light direction: ${globe.lightDirection.toDegrees().roundToInt()}°")
         },
     )
     group["rotation_speed"] = slider(

@@ -86,17 +86,3 @@ class EmptyShader: GlobeShader {
         return Color.fromARGB(0,0,0,0)
     }
 }
-
-fun main() {
-    val terminalStrength = 0.1f
-    for (dot in listOf(-1f, -.5f, -.1f, 0f, .1f, .5f, 1f)) {
-        val lightDot = dot.normalize(-1f, 1f)
-        val fade = lightDot.normalize(.5f - terminalStrength, .5f + terminalStrength)
-        val fadeEased = fade.pow(1.5f).coerceIn(0f, 1f)
-        val lerpAmount = fadeEased.coerceIn(0f, 1f)
-
-        println("=============")
-        println(lightDot)
-        println(lerpAmount)
-    }
-}

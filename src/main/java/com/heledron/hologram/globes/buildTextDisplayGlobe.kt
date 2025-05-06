@@ -14,7 +14,7 @@ import org.joml.Math
 import org.joml.Matrix4f
 
 
-fun buildTextDisplayEntities(
+fun buildTextDisplayGlobe(
     world: World,
     position: Vector,
     shader: GlobeShader,

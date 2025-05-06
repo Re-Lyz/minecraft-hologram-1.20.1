@@ -70,7 +70,7 @@ fun setupGlobes() {
             "reset" to { globe = Globe() },
             "earth" to ::presetEarth,
             "hologram" to ::presetHologram,
-            "animate_text_grid_size" to ::presetAnimateTextGridSize,
+            "basketball" to ::presetBasketballPlanet,
         )
 
         setExecutor { sender, _, _, args ->
