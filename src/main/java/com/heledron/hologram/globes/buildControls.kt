@@ -1,5 +1,9 @@
 package com.heledron.hologram.globes
 
+import com.heledron.hologram.ui.SliderState
+import com.heledron.hologram.ui.radioButton
+import com.heledron.hologram.ui.slider
+import com.heledron.hologram.ui.snapTo
 import com.heledron.hologram.utilities.maths.denormalize
 import com.heledron.hologram.utilities.maths.normalize
 import com.heledron.hologram.utilities.maths.toDegrees
@@ -59,7 +63,7 @@ fun buildGlobeControls(
         apply: (Globe) -> Unit,
         isSelected: Boolean,
     ): RenderItem {
-        return buildRadioButton(
+        return radioButton(
             world = world,
             position = position,
             matrix = Matrix4f(controlsTransform)
@@ -143,11 +147,10 @@ fun buildGlobeControls(
                 .translate(translation.toVector3f())
                 .rotateY(-rot.toFloat() * offset.sign)
 
-        out["slider"] = buildSlider(
+        out["slider"] = slider(
             world = world,
             position = position,
-            matrix = Matrix4f(transform).scale(.06f, sliderHeight,1f),
-            thumb = Matrix4f().scale(1.3f, .035f, 1f),
+            matrix = Matrix4f(transform).scale(.06f, sliderHeight, 1f),
             state = state,
             transformer = transformer,
             progress = progress,
@@ -244,10 +247,4 @@ fun buildGlobeControls(
     )
 
     return group
-}
-
-private fun Float.snapTo(value: Float, distance: Float): Float {
-    val diff = abs(this - value)
-    if (diff <= distance) return value
-    return this
 }

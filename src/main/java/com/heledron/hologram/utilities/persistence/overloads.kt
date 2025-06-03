@@ -7,7 +7,12 @@ import org.bukkit.persistence.PersistentDataType
 
 
 fun PersistentDataContainer.getInt(key: NamespacedKey) = this.get(key, PersistentDataType.INTEGER)
+
 fun PersistentDataContainer.getFloat(key: NamespacedKey) = this.get(key, PersistentDataType.FLOAT)
+fun PersistentDataContainer.setFloat(key: NamespacedKey, value: Float) {
+    this.set(key, PersistentDataType.FLOAT, value)
+}
+
 fun PersistentDataContainer.getDouble(key: NamespacedKey) = this.get(key, PersistentDataType.DOUBLE)
 
 fun PersistentDataContainer.getString(key: NamespacedKey) = this.get(key, PersistentDataType.STRING)
@@ -31,3 +36,6 @@ fun PersistentDataContainer.setColor(key: NamespacedKey, value: Color) {
     val string = "${toHex(value.alpha)}${toHex(value.red)}${toHex(value.green)}${toHex(value.blue)}"
     setString(key, string)
 }
+
+fun PersistentDataContainer.getBoolean(key: NamespacedKey) = this.get(key, PersistentDataType.BOOLEAN)
+fun PersistentDataContainer.setBoolean(key: NamespacedKey, value: Boolean) = this.set(key, PersistentDataType.BOOLEAN, value)

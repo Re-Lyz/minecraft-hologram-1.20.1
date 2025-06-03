@@ -9,6 +9,7 @@ import org.bukkit.World
 import org.bukkit.entity.Display
 import org.bukkit.util.Vector
 import org.joml.Matrix4f
+import org.joml.Vector3f
 import org.joml.Vector4f
 import kotlin.math.asin
 import kotlin.math.atan2
@@ -53,8 +54,8 @@ fun buildBlockDisplayGlobe(
 }
 
 private class BlockDisplayPiece (
-    val u: Double,
-    val v: Double,
+    val u: Float,
+    val v: Float,
     val transform: Matrix4f,
 )
 
@@ -74,10 +75,10 @@ private fun generatePixels(gridSize: Int): List<BlockDisplayPiece> {
                 if (distance > radius.pow(2)) continue
                 if (distance < (radius - 1).pow(2)) continue
 
-                val direction = Vector(xPos, yPos, zPos).normalize()
+                val direction = Vector3f(xPos, yPos, zPos).normalize()
 
-                val u = (1.75 - atan2(direction.z, direction.x) / (Math.PI * 2)) % 1.0
-                val v = 0.5 - asin(direction.y) / Math.PI
+                val u = (1.75f - atan2(direction.z, direction.x) / (Math.PI.toFloat() * 2)) % 1f
+                val v = 1 - (0.5f - asin(direction.y) / Math.PI.toFloat())
 
                 val matrix = Matrix4f()
                     .scale(1 / (radius + 1))

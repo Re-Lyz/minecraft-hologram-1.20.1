@@ -1,5 +1,6 @@
-package com.heledron.hologram.globes
+package com.heledron.hologram.ui
 
+import com.heledron.hologram.globes.GlobeAssets
 import com.heledron.hologram.utilities.colors.lerpOkLab
 import com.heledron.hologram.utilities.colors.lerpRGB
 import com.heledron.hologram.utilities.colors.scaleAlpha
@@ -11,7 +12,7 @@ import com.heledron.hologram.utilities.point_detection.isLookingAt
 import com.heledron.hologram.utilities.rendering.RenderGroup
 import com.heledron.hologram.utilities.rendering.interpolateTransform
 import com.heledron.hologram.utilities.rendering.renderText
-import com.heledron.hologram.utilities.rendering.textBackgroundTransform
+import com.heledron.hologram.utilities.rendering.textDisplayUnitSquare
 import org.bukkit.*
 import org.bukkit.entity.Display
 import org.bukkit.entity.Player
@@ -20,7 +21,7 @@ import org.bukkit.util.Vector
 import org.joml.Matrix4f
 import kotlin.math.sin
 
-fun buildRadioButton(
+fun radioButton(
     world: World,
     position: Vector,
     matrix: Matrix4f,
@@ -60,7 +61,7 @@ fun buildRadioButton(
             it.text = " "
             it.teleportDuration = 1
             it.interpolationDuration = 1
-            it.interpolateTransform(Matrix4f(hitboxTransform).mul(textBackgroundTransform))
+            it.interpolateTransform(Matrix4f(hitboxTransform).mul(textDisplayUnitSquare))
             it.backgroundColor = GlobeAssets.hologramSeaColor
         }
     )
@@ -153,7 +154,7 @@ private fun buildRing(
             .rotateZ(angle)
             .translate(1f - borderThickness, -length / 2, 0f)
             .scale(borderThickness, length, 0f)
-            .mul(textBackgroundTransform)
+            .mul(textDisplayUnitSquare)
 
         group[i] = renderText(
             world = world,

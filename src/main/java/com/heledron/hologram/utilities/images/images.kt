@@ -5,25 +5,19 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 
 
-// Utility to sample colors from a BufferedImage
-fun BufferedImage.sampleColor(x: Double, y: Double): Color {
-    // Ensure coordinates are within 0.0 to 1.0
-    val normalizedX = x.coerceIn(0.0, 1.0)
-    val normalizedY = y.coerceIn(0.0, 1.0)
+fun BufferedImage.sampleColor(x: Float, y: Float): Color {
+    val pixelX = (x.coerceIn(0f, 1f) * (this.width - 1)).toInt()
+    val pixelY = ((1 - y).coerceIn(0f, 1f) * (this.height - 1)).toInt()
 
-    // Map to pixel coordinates
-    val pixelX = (normalizedX * (this.width - 1)).toInt()
-    val pixelY = (normalizedY * (this.height - 1)).toInt()
+    return this.getColor(pixelX, pixelY)
+}
 
-    // Get RGB color from image
-    val rgb = this.getRGB(pixelX, pixelY)
-
-    // Extract components including alpha
+fun BufferedImage.getColor(x: Int, y: Int): Color {
+    val rgb = this.getRGB(x, y)
     val alpha = (rgb shr 24) and 0xFF
     val red = (rgb shr 16) and 0xFF
     val green = (rgb shr 8) and 0xFF
     val blue = rgb and 0xFF
-
     return Color.fromARGB(alpha, red, green, blue)
 }
 
@@ -53,22 +47,18 @@ fun BufferedImage.map(transform: (Color, x: Int, y: Int) -> Color): BufferedImag
     for (y in 0 until newImage.height) {
         for (x in 0 until newImage.width) {
             val rgb = this.getRGB(x, y)
-            // Extract color components including alpha
             val alpha = (rgb shr 24) and 0xFF
             val red = (rgb shr 16) and 0xFF
             val green = (rgb shr 8) and 0xFF
             val blue = rgb and 0xFF
 
-            // Apply transformation to the color, including alpha
             val transformedColor = transform(Color.fromARGB(alpha, red, green, blue), x, y)
 
-            // Create new RGB value with alpha
             val newRgb = ((transformedColor.alpha and 0xFF) shl 24) or
                     ((transformedColor.red and 0xFF) shl 16) or
                     ((transformedColor.green and 0xFF) shl 8) or
                     (transformedColor.blue and 0xFF)
 
-            // Set the new color
             newImage.setRGB(x, y, newRgb)
         }
     }

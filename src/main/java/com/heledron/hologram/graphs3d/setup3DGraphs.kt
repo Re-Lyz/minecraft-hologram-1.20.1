@@ -1,170 +1,123 @@
 package com.heledron.hologram.graphs3d
 
-import com.heledron.hologram.utilities.block_colors.FindBlockWithColor
-import com.heledron.hologram.utilities.colors.hsv
+import com.heledron.hologram.ui.SliderState
 import com.heledron.hologram.utilities.currentTick
 import com.heledron.hologram.utilities.custom_entities.CustomEntityComponent
+import com.heledron.hologram.utilities.custom_items.CustomItemComponent
+import com.heledron.hologram.utilities.custom_items.attach
+import com.heledron.hologram.utilities.custom_items.createNamedItem
+import com.heledron.hologram.utilities.custom_items.customItemRegistry
 import com.heledron.hologram.utilities.dataStructures.Grid
+import com.heledron.hologram.utilities.maths.denormalize
+import com.heledron.hologram.utilities.maths.getQuaternion
+import com.heledron.hologram.utilities.playSound
 import com.heledron.hologram.utilities.rendering.*
-import org.bukkit.Bukkit
+import com.heledron.hologram.utilities.sendActionBar
 import org.bukkit.Color
-import org.bukkit.World
-import org.bukkit.entity.Display
-import org.bukkit.entity.Player
-import org.bukkit.util.Vector
+import org.bukkit.Material
+import org.bukkit.Sound
 import org.joml.Matrix4f
 
-fun setup3DGraphs() {
-    val selectedFunction: GraphFunction = RippleGraphFunction
-    var maxY = .0
-    var minY = .0
 
+
+class Graph3D {
+    var xWidth = 1.0
+    var zWidth = 1.0
+
+    var xResolution = 30
+    var zResolution = 30
+
+    val xRenderSize = 3.5
+    val zRenderSize = 3.5
+
+    var selectedFunction: GraphFunction = RippleGraphFunction
+    var selectedRenderer = "text"
+
+    var shader: GraphShader = ::blueGradientShader
+
+    val widthSliderState = SliderState()
+    val resolutionSliderState = SliderState()
+}
+
+fun setup3DGraphs() {
     val graphComponent = CustomEntityComponent.fromString("3d_grapher")
+    val grapher = Graph3D()
+
+
+    val graphShaderItemComponent = CustomItemComponent("graph_shader_selector")
+    customItemRegistry += createNamedItem(Material.DIAMOND, "Change Shader").attach(graphShaderItemComponent)
+
+    graphShaderItemComponent.onGestureUse { player, _ ->
+        val options = listOf(::randomShader, ::blueGradientShader, ::hueShader)
+        val currentIndex = options.indexOf(grapher.shader)
+        val nextIndex = (currentIndex + 1) % options.size
+        grapher.shader = options[nextIndex]
+
+        val name = when (grapher.shader) {
+            ::randomShader -> "Random"
+            ::blueGradientShader -> "Blue Gradient"
+            ::hueShader -> "Hue Gradient"
+            else -> "Unknown"
+        }
+
+        player.sendActionBar(name)
+        playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 2f)
+    }
 
     graphComponent.onTick { marker ->
-        val xSegments = 60
-        val zSegments = 60
 
-        val xRenderSize = 5.0
-        val zRenderSize = 5.0
+        grapher.selectedFunction.animate(currentTick)
 
-        selectedFunction.animate(currentTick)
+        val cells = Grid(grapher.xResolution, grapher.zResolution) { .0 }
 
-        val cells = Grid(xSegments, zSegments) { .0 }
+        for (ix in 0 until grapher.xResolution) {
+            for (iz in 0 until grapher.zResolution) {
+                val x = (ix.toDouble() / (grapher.xResolution - 1)).denormalize(-grapher.xWidth / 2, grapher.xWidth / 2)
+                val z = (iz.toDouble() / (grapher.zResolution - 1)).denormalize(-grapher.zWidth / 2, grapher.zWidth / 2)
 
-        for (x in 0 until xSegments) {
-            for (z in 0 until zSegments) {
-                cells[x to z] = selectedFunction.solveY(x.toDouble() / (xSegments - 1), z.toDouble() / (zSegments - 1))
+                cells[ix to iz] = grapher.selectedFunction.solveY(x, z)
             }
         }
 
-        if (cells.isEmpty()) return@onTick
 
-        // maxY = Math.max(cells.values().max(), maxY)
-        // minY = Math.min(cells.values().min(), minY)
+        val maxY = cells.values().maxOrNull() ?: .0
+        val minY = cells.values().minOrNull() ?: .0
 
-        maxY = cells.values().max()
-        minY = cells.values().min()
+        val renderItems = RenderGroup()
 
-        val player = Bukkit.getOnlinePlayers().firstOrNull() ?: return@onTick
-        val renderItems = renderGraphWithBlocks(
+        renderItems["controls"] = renderGraphControls(
             world = marker.world,
             position = marker.location.toVector(),
-            cells = cells,
-            xSize = xRenderSize,
-            zSize = zRenderSize,
-            minY = minY,
-            maxY = maxY,
-            colorProvider = { hueColorProvider(it) },
-//            screenSpace = player
+            grapher = grapher,
+            matrix = Matrix4f().rotate(marker.location.getQuaternion())
         )
 
-
+        if (grapher.selectedRenderer == "text") {
+            renderItems["graph_text"] = renderTextDisplayGraph(
+                world = marker.world,
+                position = marker.location.toVector(),
+                cells = cells,
+                xSize = grapher.xRenderSize,
+                ySize = grapher.xRenderSize / 6,
+                zSize = grapher.zRenderSize,
+                minY = minY,
+                maxY = maxY,
+                shader = grapher.shader,
+            )
+        } else if (grapher.selectedRenderer == "block") {
+            renderItems["graph_blocks"] = renderBlockDisplayGraph(
+                world = marker.world,
+                position = marker.location.toVector(),
+                cells = cells,
+                xSize = grapher.xRenderSize,
+                ySize = grapher.xRenderSize / 6,
+                zSize = grapher.zRenderSize,
+                minY = minY,
+                maxY = maxY,
+                shader = grapher.shader,
+            )
+        }
 
         renderItems.submit(marker)
     }
-}
-
-fun hueColorProvider(hue: Float): Color {
-    return hsv(hue * 360, 1f, 1f)
-}
-
-val blueToWhiteGradient = listOf(
-    0.0f to Color.fromRGB(0x005494),
-    0.5f to Color.fromRGB(0x00BADB),
-    0.99f to Color.fromRGB(0x78DBFF), // light blue
-)
-
-fun renderGraphWithBlocks(
-    world: World,
-    position: Vector,
-    cells: Grid<Double>,
-    xSize: Double,
-    zSize: Double,
-    minY: Double,
-    maxY: Double,
-    colorProvider: ((Float) -> Color),
-): RenderGroup {
-    val group = RenderGroup()
-
-    val xSegments = cells.width
-    val zSegments = cells.height
-
-    for ((x,z) in cells.indices()) {
-        val y = cells[x to z]
-
-        val offsetX = (x.toDouble() / (xSegments - 1) - .5) * xSize
-        val offsetZ = (z.toDouble() / (zSegments - 1) - .5) * zSize
-        val offset = Vector(offsetX, y, offsetZ)
-
-        group[x to z] = renderBlock(
-            world = world,
-            position = position.clone().add(offset),
-            init = {
-                val size = (xSize / xSegments).toFloat() * .8f
-                it.teleportDuration = 1
-                it.interpolationDuration = 1
-                it.interpolateTransform(Matrix4f().scale(size).translate(-.5f, -.5f, -.5f))
-            },
-            update = {
-                val color = colorProvider(((y - minY) / (maxY - minY)).toFloat())
-                val match = FindBlockWithColor.OKLAB_WITH_BRIGHTNESS.match(color)
-
-                it.block = match.block
-                it.brightness = Display.Brightness(15, match.brightness)
-            }
-        )
-    }
-
-    return group
-}
-
-
-fun textDisplayRenderer(
-    world: World,
-    position: Vector,
-    cells: Grid<Double>,
-    xSize: Double,
-    zSize: Double,
-    minY: Double,
-    maxY: Double,
-    colorProvider: ((Double) -> Color),
-    screenSpace: Player? = null
-): RenderGroup {
-    val group = RenderGroup()
-
-    val xSegments = cells.width
-    val zSegments = cells.height
-
-    val particleSize = (xSize / xSegments).toFloat() * 2.0f
-
-    for ((x,z) in cells.indices()) {
-        val offsetX = (x.toDouble() / (xSegments - 1) - .5) * xSize
-        val offsetZ = (z.toDouble() / (zSegments - 1) - .5) * zSize
-        val pos = Vector(offsetX, cells[x to z], offsetZ)
-
-        val renderPos = if (screenSpace == null) pos else Vector()
-        val screenSpacePos = if (screenSpace == null)
-            Matrix4f() else
-            Matrix4f().translate(0f,-(screenSpace.height - screenSpace.eyeHeight).toFloat(),-3f).scale(.3f).translate(pos.toVector3f())
-
-        group[x to z] = renderText(
-            world = world,
-            position = position.clone().add(renderPos),
-            init = {
-                it.billboard = Display.Billboard.CENTER
-                it.text = " "
-                it.teleportDuration = 1
-                it.interpolationDuration = 1
-//                it.isSeeThrough = true
-            },
-            update = {
-                it.interpolateTransform(screenSpacePos.scale(particleSize).mul(textBackgroundTransform))
-                it.backgroundColor = colorProvider((pos.y - minY) / (maxY - minY))
-                screenSpace?.addPassenger(it)
-            }
-        )
-    }
-
-    return group
 }

@@ -14,25 +14,25 @@ import kotlin.math.pow
 
 object GlobeAssets {
     // surface
-    val basketball = loadImage("earthAssets/basketball.png")//.resizeHeight(80)
-    val earthDay = loadImage("earthAssets/day.png")//.resizeHeight(80)
-    val earthNight = loadImage("earthAssets/night.jpg")//.resizeHeight(80)
+    val basketball = loadImage("earth/basketball.png")//.resizeHeight(80)
+    val earthDay = loadImage("earth/day.png")//.resizeHeight(80)
+    val earthNight = loadImage("earth/night.jpg")//.resizeHeight(80)
 
     // clouds
-    val cloudsDay = loadImage("earthAssets/clouds.jpg").map { color, _, _ -> Color.WHITE.setAlpha(color.red) }
+    val cloudsDay = loadImage("earth/clouds.jpg").map { color, _, _ -> Color.WHITE.setAlpha(color.red) }
     val cloudsNight = cloudsDay.map { color, _, _ -> Color.fromRGB(0x2a3354).setAlpha(color.alpha) }
     val cloudsHologram = cloudsNight.map { color, _, _ -> Color.fromRGB(0x2fabf5).setAlpha(color.alpha).scaleAlpha(.4f) }
 
     val hologramSeaColor = Color.fromRGB(0x080142).scaleAlpha(.2f)
-    val earthHologram = loadImage("earthAssets/bathymetry.jpg").let { image ->
+    val earthHologram = loadImage("earth/bathymetry.jpg").let { image ->
         val hologramGradient = listOf(
             0f to Color.fromRGB(0x0b62bf).scaleAlpha(.8f),
             1f to Color.fromRGB(0x00FFFF)
         )
 
         image.map { color, x, y ->
-            val u = (x.toDouble() / image.width)
-            val v = (y.toDouble() / image.height)
+            val u = (x.toFloat() / image.width)
+            val v = 1 - (y.toFloat() / image.height)
 
             val isLand = color.red + color.green + color.blue < 25
             if (isLand) {

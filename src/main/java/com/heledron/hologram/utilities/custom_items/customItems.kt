@@ -3,6 +3,7 @@ package com.heledron.hologram.utilities.custom_items
 import com.heledron.hologram.utilities.events.onGestureUseItem
 import com.heledron.hologram.utilities.events.onTick
 import com.heledron.hologram.utilities.namespacedID
+import com.heledron.hologram.utilities.requireCommand
 import org.bukkit.Bukkit
 import org.bukkit.Bukkit.createInventory
 import org.bukkit.ChatColor
@@ -19,8 +20,21 @@ fun openCustomItemInventory(player: Player) {
     player.openInventory(inventory)
 }
 
+fun setupCustomItemCommand() {
+    requireCommand("items").apply {
+        setExecutor { sender, _, _, _ ->
+            if (sender !is Player) {
+                sender.sendMessage("This command can only be used by players.")
+                return@setExecutor true
+            }
+            openCustomItemInventory(sender)
+            true
+        }
+    }
+}
+
 class CustomItemComponent(val id: String) {
-    fun isItem(item: ItemStack): Boolean {
+    fun isAttached(item: ItemStack): Boolean {
         return item.itemMeta?.persistentDataContainer?.get(namespacedID("item_component_$id"), PersistentDataType.BOOLEAN) == true
     }
 
@@ -32,14 +46,14 @@ class CustomItemComponent(val id: String) {
 
     fun onGestureUse(action: (Player, ItemStack) -> Unit) {
         onGestureUseItem { player, item ->
-            if (isItem(item)) action(player, item)
+            if (isAttached(item)) action(player, item)
         }
     }
 
     fun onInteractEntity(action: (Player, Entity, ItemStack) -> Unit) {
         com.heledron.hologram.utilities.events.onInteractEntity(fun(player, entity, hand) {
             val item = player.inventory.getItem(hand) ?: return
-            if (isItem(item)) action(player, entity, item)
+            if (isAttached(item)) action(player, entity, item)
         })
     }
 
@@ -48,8 +62,8 @@ class CustomItemComponent(val id: String) {
             for (player in Bukkit.getServer().onlinePlayers) {
                 val itemInMainHand = player.inventory.itemInMainHand
                 val itemInOffHand = player.inventory.itemInOffHand
-                if (isItem(itemInMainHand)) action(player, itemInMainHand)
-                if (isItem(itemInOffHand)) action(player, itemInOffHand)
+                if (isAttached(itemInMainHand)) action(player, itemInMainHand)
+                if (isAttached(itemInOffHand)) action(player, itemInOffHand)
             }
         }
     }

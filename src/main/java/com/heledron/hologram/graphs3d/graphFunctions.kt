@@ -7,14 +7,22 @@ interface GraphFunction {
     fun animate(currentTick: Int)
 }
 
+object FlatGraphFunction : GraphFunction {
+    override fun solveY(x: Double, z: Double): Double {
+        return 0.0
+    }
+
+    override fun animate(currentTick: Int) {}
+}
+
 object ParaboloidGraphFunction : GraphFunction {
     private var xOffset = .0
     private var zOffset = .0
 
     override fun solveY(x: Double, z: Double): Double {
-        val ax = (x - .5) * 5.0 + xOffset
-        val az = (z - .5) * 5.0 + zOffset
-        return (ax * ax + az * az) / 5
+        val ax = x * 5.0 + xOffset
+        val az = z * 5.0 + zOffset
+        return (ax * ax + az * az) / 7.5
     }
 
     override fun animate(currentTick: Int) {
@@ -28,9 +36,9 @@ object SaddleGraphFunction : GraphFunction {
     private var zOffset = .0
 
     override fun solveY(x: Double, z: Double): Double {
-        val ax = (x - .5) * 5.0 + xOffset
-        val az = (z - .5) * 5.0 + zOffset
-        return (ax * ax - az * az) / 5
+        val ax = x * 5.0 + xOffset
+        val az = z * 5.0 + zOffset
+        return (ax * ax - az * az) / 7.5
     }
 
     override fun animate(currentTick: Int) {
@@ -46,7 +54,7 @@ object SineGraphFunction : GraphFunction {
     override fun solveY(x: Double, z: Double): Double {
         val ax = x + xOffset
         val az = z + zOffset
-        return Math.sin(ax * Math.PI) + Math.sin(az * Math.PI)
+        return Math.sin(ax * Math.PI) + Math.sin(az * Math.PI) / 2
     }
 
     override fun animate(currentTick: Int) {
@@ -59,8 +67,8 @@ object RippleGraphFunction : GraphFunction {
     private var tick = 0
 
     override fun solveY(x: Double, z: Double): Double {
-        val ax = (x - .5) * 7.0
-        val az = (z - .5) * 7.0
+        val ax = x * 7.0
+        val az = z * 7.0
         val offset = tick / 20.0 * 2.0
 
         return Math.sin((ax * ax + az * az) / 8 + offset)

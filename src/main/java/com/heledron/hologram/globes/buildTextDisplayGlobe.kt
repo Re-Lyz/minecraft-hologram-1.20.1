@@ -9,9 +9,11 @@ import com.heledron.hologram.utilities.rendering.*
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Display.Brightness
+import org.bukkit.entity.TextDisplay
 import org.bukkit.util.Vector
 import org.joml.Math
 import org.joml.Matrix4f
+import org.joml.Vector3f
 
 
 fun buildTextDisplayGlobe(
@@ -58,22 +60,7 @@ fun buildTextDisplayGlobe(
 
                     // show or hide based on if the text display is facing the player
                     it.isVisibleByDefault = !doCulling
-                    if (doCulling) Bukkit.getOnlinePlayers().forEach { player ->
-                        val visiblePosition = position.toVector3f()
-                        visiblePosition.add(pieces.first().transform(FORWARD_VECTOR.toVector4f()).toVector3f())
-
-                        val direction = player.eyeLocation.toVector().toVector3f().sub(visiblePosition)
-
-                        var angle = direction.angle(normal)
-                        if (pieceIndex == 1) angle = Math.PI.toFloat() - angle
-
-                        val isFacing = angle < 90.0f.toRadians()
-                        if (isFacing) {
-                            player.showEntity(currentPlugin, it)
-                        } else {
-                            player.hideEntity(currentPlugin, it)
-                        }
-                    }
+                    if (doCulling) it.cull()
                 }
             )
         }
@@ -82,11 +69,10 @@ fun buildTextDisplayGlobe(
     return group
 }
 
-
 private class TextDisplayPixel(
     val key: Any,
-    val u: Double,
-    val v: Double,
+    val u: Float,
+    val v: Float,
     val transform: Matrix4f,
     val transformInner: Matrix4f,
 )
@@ -98,13 +84,13 @@ private fun generatePixels(ySteps: Int): List<TextDisplayPixel> {
     val particleSize = perimeter.toFloat() / ySteps.toFloat() / 2
 
     for (yStep in 0 .. ySteps) {
-        val y = yStep / ySteps.toDouble()
+        val y = yStep / ySteps.toFloat()
 
         val scale = Math.sin(Math.PI * y)
         val rSteps = (ySteps * 2 * scale).toInt().coerceAtLeast(1)
 
         for (rStep in 0 until rSteps) {
-            val r = rStep / rSteps.toDouble()
+            val r = rStep / rSteps.toFloat()
 
 
             val yRot = Math.PI * 2 * r
@@ -119,9 +105,9 @@ private fun generatePixels(ySteps: Int): List<TextDisplayPixel> {
             sphereItems += TextDisplayPixel(
                 key = yStep to rStep,
                 u = r,
-                v = 1 - y,
-                transform = Matrix4f(matrix).translate(-.5f, -.5f, 0f).mul(textBackgroundTransform),
-                transformInner = Matrix4f(matrix).rotateY(Math.PI.toFloat()).translate(-.5f, -.5f, 0f).mul(textBackgroundTransform),
+                v = y,
+                transform = Matrix4f(matrix).translate(-.5f, -.5f, 0f).mul(textDisplayUnitSquare),
+                transformInner = Matrix4f(matrix).rotateY(Math.PI.toFloat()).translate(-.5f, -.5f, 0f).mul(textDisplayUnitSquare),
             )
         }
     }

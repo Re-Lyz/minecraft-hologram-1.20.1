@@ -75,13 +75,12 @@ private object EntityTracker {
         }
 
         onPluginShutdown {
-            removeAll()
+            // removeAll()
+            cleanup()
         }
 
         // remove dangling entities from previous failed shutdowns
-        component.entities().forEach {
-            it.remove()
-        }
+        cleanup()
     }
 
     fun <T : Entity>get(handle: Any, clazz: Class<T>): T? {
@@ -124,5 +123,11 @@ private object EntityTracker {
             entity.remove()
         }
         rendered.clear()
+    }
+
+    fun cleanup() {
+        component.entities().forEach {
+            it.remove()
+        }
     }
 }

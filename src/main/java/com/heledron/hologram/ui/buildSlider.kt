@@ -1,4 +1,4 @@
-package com.heledron.hologram.globes
+package com.heledron.hologram.ui
 
 import com.heledron.hologram.utilities.colors.lerpOkLab
 import com.heledron.hologram.utilities.colors.scaleAlpha
@@ -8,7 +8,7 @@ import com.heledron.hologram.utilities.point_detection.isLookingAt
 import com.heledron.hologram.utilities.rendering.RenderGroup
 import com.heledron.hologram.utilities.rendering.interpolateTransform
 import com.heledron.hologram.utilities.rendering.renderText
-import com.heledron.hologram.utilities.rendering.textBackgroundTransform
+import com.heledron.hologram.utilities.rendering.textDisplayUnitSquare
 import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.Sound
@@ -18,6 +18,7 @@ import org.bukkit.entity.Player
 import org.bukkit.util.Vector
 import org.joml.Matrix4f
 import java.util.WeakHashMap
+import kotlin.math.abs
 
 private val focusedInputMap = WeakHashMap<Player, Any>()
 
@@ -38,11 +39,11 @@ class SliderState {
     var isBeingMoved = false
 }
 
-fun buildSlider(
+fun slider(
     world: World,
     position: Vector,
     matrix: Matrix4f,
-    thumb: Matrix4f,
+    thumb: Matrix4f = Matrix4f().scale(1.3f, .035f, 1f),
     state: SliderState,
     transformer: (Float) -> Float = { it },
     onChange: (Float, Player) -> Unit,
@@ -111,7 +112,7 @@ fun buildSlider(
             it.brightness = Display.Brightness(15, 15)
         },
         update = {
-            it.interpolateTransform(Matrix4f(trackTransform).mul(textBackgroundTransform))
+            it.interpolateTransform(Matrix4f(trackTransform).mul(textDisplayUnitSquare))
 
             val old = it.backgroundColor ?: trackColor
             it.backgroundColor = old.lerpOkLab(trackColor, .5f).scaleAlpha(opacity)
@@ -136,7 +137,7 @@ fun buildSlider(
                 .translate(0f,displayProgress,z)
                 .mul(thumb)
                 .translate(-.5f,-.5f,0f)
-                .mul(textBackgroundTransform))
+                .mul(textDisplayUnitSquare))
 
             val old = it.backgroundColor ?: thumbColor
             it.backgroundColor = old.lerpOkLab(thumbColor, .5f).scaleAlpha(opacity)
@@ -144,4 +145,11 @@ fun buildSlider(
     )
 
     return group
+}
+
+
+fun Float.snapTo(value: Float, distance: Float): Float {
+    val diff = abs(this - value)
+    if (diff <= distance) return value
+    return this
 }

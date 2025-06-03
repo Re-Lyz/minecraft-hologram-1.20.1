@@ -117,9 +117,9 @@ fun Color.toChatColor(): ChatColor {
 
 /**
  * Converts an HSV color to RGB.
- * @param h The hue in degrees.
- * @param s The saturation as a percentage.
- * @param v The value as a percentage.
+ * @param h The hue in degrees. (0 - 360)
+ * @param s The saturation as a percentage. (0 - 1)
+ * @param v The value as a percentage. (0 - 1)
  * @return The RGB color.
  */
 fun hsv(h: Float, s: Float, v: Float): Color {

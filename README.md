@@ -24,6 +24,7 @@ This plugin is very experimental and untested in multiplayer. Use at your own ri
 
 
 ## Commands
+### Globe
 Summon a globe:
 ```
 summon minecraft:marker ~ ~1 ~-1 {Tags:["globe"],Rotation:[0f,0f]}
@@ -53,6 +54,29 @@ globe_settings <name>
 globe_settings <name> <value>
 ```
 
+### Static Models
+Create static models:
+```
+summon minecraft:marker ~ ~ ~ {Tags:["mountainray"]}
+summon minecraft:marker ~ ~ ~ {Tags:["mountainray_juvenile"]}
+summon minecraft:marker ~ ~ ~ {Tags:["utah_teapot"]}
+summon minecraft:marker ~ ~ ~ {Tags:["suzanne"]}
+```
+
+### 3D Grapher
+```
+summon minecraft:marker ~ ~ ~ {Tags:["3d_grapher"]}
+```
+
+### Marching Cubes
+Create and configure marching cubes:
+```
+summon minecraft:marker ~ ~ ~ {Tags:["marching_cubes"]}
+data modify entity @n[tag=marching_cubes] BukkitValues merge value {"hologram:optimize":true}
+data modify entity @n[tag=marching_cubes] BukkitValues merge value {"hologram:render_debug":true}
+data modify entity @n[tag=marching_cubes] BukkitValues merge value {"hologram:isovalue":.5f}
+```
+
 ## Development
 1. Clone or download the repo.
 2. Run Maven `package` to build the plugin. The resulting JAR will be in the `target` folder.
@@ -70,7 +94,18 @@ https://www.robinwood.com/Catalog/FreeStuff/Textures/TexturePages/BallMaps.html
 
 Some assets have been modified.
 
+Utah Teapot model by Martin Newell:
+https://en.wikipedia.org/wiki/Utah_teapot
+
+Blender Monkey model by the Blender Foundation:
+https://www.blender.org/
+
+Marching Cubes algorithm adapted from Nihal Jain:
+https://github.com/nihaljn/marching-cubes
+
 ## License
+3rd party assets are under their respective licenses.
+
 You may use the plugin and source code for both commercial or non-commercial purposes.
 
 Attribution is appreciated but not due.

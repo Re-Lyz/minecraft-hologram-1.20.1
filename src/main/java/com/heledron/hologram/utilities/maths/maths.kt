@@ -1,6 +1,7 @@
 package com.heledron.hologram.utilities.maths
 
 import org.bukkit.Location
+import org.bukkit.util.Transformation
 import org.bukkit.util.Vector
 import org.joml.*
 import java.lang.Math
@@ -19,6 +20,9 @@ val RIGHT_VECTOR; get () = Vector(1, 0, 0)
 fun Vector.toVector4f() = Vector4f(x.toFloat(), y.toFloat(), z.toFloat(), 1f)
 fun Vector3f.toVector4f() = Vector4f(x, y, z, 1f)
 fun Vector4f.toVector3f() = Vector3f(x, y, z)
+
+fun Vector3f.toVector() = Vector(x.toDouble(), y.toDouble(), z.toDouble())
+fun Vector3d.toVector() = Vector(x.toFloat(), y.toFloat(), z.toFloat())
 fun Vector4f.toVector() = Vector(x.toDouble(), y.toDouble(), z.toDouble())
 
 fun Vector.copy(vector: Vector3d): Vector {
@@ -44,6 +48,13 @@ fun Vector.yaw(): Float {
 }
 
 fun Vector.rotate(quaternion: Quaterniond) = copy(Vector3d(x, y, z).rotate(quaternion))
+
+fun Vector.lerp(other: Vector, t: Float): Vector {
+    this.x = x + (other.x - x) * t
+    this.y = y + (other.y - y) * t
+    this.z = z + (other.z - z) * t
+    return this
+}
 
 fun Location.yawRadians(): Float {
     return -yaw.toRadians()
@@ -123,4 +134,59 @@ fun Float.normalize(min: Float, max: Float): Float {
 
 fun Float.denormalize(min: Float, max: Float): Float {
     return this * (max - min) + min
+}
+
+fun Transformation.normal(): Vector3f {
+    val rotation = Quaternionf(leftRotation).mul(rightRotation)
+    val forward = Vector3f(0f, 0f, 1f).rotate(rotation)
+    return forward.normalize()
+}
+
+fun shearMatrix(
+    xy: Float,
+    xz: Float,
+    yx: Float,
+    yz: Float,
+    zx: Float,
+    zy: Float,
+): Matrix4f {
+    return Matrix4f(
+        1f, xy, xz, 0f,
+        yx, 1f, yz, 0f,
+        zx, zy, 1f, 0f,
+        0f, 0f, 0f, 1f
+    )
+}
+
+fun Matrix4f.shear(
+    xy: Float = 0f,
+    xz: Float = 0f,
+    yx: Float = 0f,
+    yz: Float = 0f,
+    zx: Float = 0f,
+    zy: Float = 0f,
+): Matrix4f = this.mul(shearMatrix(
+    xy = xy,
+    xz = xz,
+    yx = yx,
+    yz = yz,
+    zx = zx,
+    zy = zy,
+))
+
+fun Float.eased(): Float {
+    return this * this * (3 - 2 * this)
+}
+
+
+fun List<Vector>.average(): Vector {
+    val out = Vector(0.0, 0.0, 0.0)
+    for (vector in this) out.add(vector)
+    return out.multiply(1.0 / this.size)
+}
+
+fun List<Vector3f>.average(): Vector3f {
+    val out = Vector3f()
+    for (vector in this) out.add(vector)
+    return out.mul(1f / this.size)
 }

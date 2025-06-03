@@ -6,6 +6,7 @@ import com.heledron.hologram.utilities.colors.lerpRGB
 import com.heledron.hologram.utilities.colors.scaleAlpha
 import com.heledron.hologram.utilities.images.sampleColor
 import com.heledron.hologram.utilities.maths.denormalize
+import com.heledron.hologram.utilities.maths.eased
 import com.heledron.hologram.utilities.maths.normalize
 import org.bukkit.Color
 import org.joml.Vector3f
@@ -14,7 +15,7 @@ import kotlin.math.pow
 import kotlin.random.Random
 
 interface GlobeShader {
-    fun getColor(u: Double, v: Double, normal: Vector3f): Color
+    fun getColor(u: Float, v: Float, normal: Vector3f): Color
 }
 
 class EarthShader(
@@ -29,26 +30,22 @@ class EarthShader(
     var cloudStrength: Float = 1f,
     var cloudOffset: Float = 0f,
 ): GlobeShader {
-    override fun getColor(u: Double, v: Double, normal: Vector3f): Color {
+    override fun getColor(u: Float, v: Float, normal: Vector3f): Color {
         // sample images
         val dayColor = dayTexture.sampleColor(u, v)
         val nightColor = nightTexture.sampleColor(u, v)
 
-        val cloudU = (u + (1 - cloudOffset % 1.0) + 1) % 1.0
+        val cloudU = (u + (1 - cloudOffset % 1f) + 1) % 1f
         val cloudDay = cloudsDayTexture.sampleColor(cloudU, v)
         val cloudNight = cloudsNightTexture.sampleColor(cloudU, v)
 
         // calculate light
         val lightDot = normal.dot(lightDirection).normalize(-1f, 1f)
-        val lerp = lightDot.normalize(.5f - terminator, .5f + terminator).coerceIn(0f, 1f)
-        val lerpEased = lerp * lerp * (3 - 2 * lerp)
-
-//        val lightDotPow = lightDot.sign * lightDot.absoluteValue.pow(1 / terminatorStrength)
-//        val lerpAmount = lightDotPow.coerceIn(0f, 1f)
+        val lerp = lightDot.normalize(.5f - terminator, .5f + terminator).coerceIn(0f, 1f).eased()
 
         // apply colors
-        val cloudColor = cloudDay.lerpRGB(cloudNight, lerpEased).scaleAlpha(cloudStrength)
-        val color = dayColor.lerpOkLab(nightColor, lerpEased).blendAlpha(cloudColor)
+        val cloudColor = cloudDay.lerpRGB(cloudNight, lerp).scaleAlpha(cloudStrength)
+        val color = dayColor.lerpOkLab(nightColor, lerp).blendAlpha(cloudColor)
         return color
     }
 }
@@ -60,7 +57,7 @@ class TransitionShader(
     var fade: Double,
     var adjustTransparentColors: Boolean = true,
 ): GlobeShader {
-    override fun getColor(u: Double, v: Double, normal: Vector3f): Color {
+    override fun getColor(u: Float, v: Float, normal: Vector3f): Color {
         val random = Random((u * 1000 + v * 100).toInt()).nextDouble() * fade
         val t = transition.denormalize(-fade, 1 + fade)
 
@@ -82,7 +79,7 @@ class TransitionShader(
 }
 
 class EmptyShader: GlobeShader {
-    override fun getColor(u: Double, v: Double, normal: Vector3f): Color {
+    override fun getColor(u: Float, v: Float, normal: Vector3f): Color {
         return Color.fromARGB(0,0,0,0)
     }
 }
