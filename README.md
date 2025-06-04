@@ -2,7 +2,9 @@
 ## Introduction
 Hologram plugin for Minecraft.
 
-It was made as part of a video: https://youtu.be/ae_Gns9ZBqY
+Video series on YouTube:
+1. [Working Globe Hologram in Minecraft](https://youtu.be/ae_Gns9ZBqY)
+2. [3D Meshes with Text Displays in Minecraft](https://youtu.be/RnLWLQsh9mw)
 
 This plugin is very experimental and untested in multiplayer. Use at your own risk.
 
@@ -24,6 +26,12 @@ This plugin is very experimental and untested in multiplayer. Use at your own ri
 
 
 ## Commands
+### Items
+Get control items:
+```
+items
+```
+
 ### Globe
 Summon a globe:
 ```
@@ -85,22 +93,22 @@ data modify entity @n[tag=marching_cubes] BukkitValues merge value {"hologram:is
    - Mac/Linux: `ln -s originalFile.jar newFile.jar`
 
 ## Attribution
-Satellite images from NASA:
+Satellite images from NASA:  
 https://visibleearth.nasa.gov/collection/1484/blue-marble-next-generation?page=4
 https://visibleearth.nasa.gov/images/144898/earth-at-night-black-marble-2016-color-maps
 
-Basketball texture from Robin Wood:
+Basketball texture from Robin Wood:  
 https://www.robinwood.com/Catalog/FreeStuff/Textures/TexturePages/BallMaps.html
 
 Some assets have been modified.
 
-Utah Teapot model by Martin Newell:
+Utah Teapot model by Martin Newell:  
 https://en.wikipedia.org/wiki/Utah_teapot
 
-Blender Monkey model by the Blender Foundation:
+Blender Monkey model by the Blender Foundation:  
 https://www.blender.org/
 
-Marching Cubes algorithm adapted from Nihal Jain:
+Marching Cubes algorithm referenced from from Nihal Jain:  
 https://github.com/nihaljn/marching-cubes
 
 ## License
