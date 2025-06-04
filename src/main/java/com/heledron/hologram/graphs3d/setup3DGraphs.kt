@@ -7,13 +7,12 @@ import com.heledron.hologram.utilities.custom_items.CustomItemComponent
 import com.heledron.hologram.utilities.custom_items.attach
 import com.heledron.hologram.utilities.custom_items.createNamedItem
 import com.heledron.hologram.utilities.custom_items.customItemRegistry
-import com.heledron.hologram.utilities.dataStructures.Grid
+import com.heledron.hologram.utilities.data_structures.Grid
 import com.heledron.hologram.utilities.maths.denormalize
 import com.heledron.hologram.utilities.maths.getQuaternion
 import com.heledron.hologram.utilities.playSound
 import com.heledron.hologram.utilities.rendering.*
 import com.heledron.hologram.utilities.sendActionBar
-import org.bukkit.Color
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.joml.Matrix4f

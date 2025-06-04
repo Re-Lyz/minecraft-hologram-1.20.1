@@ -1,7 +1,7 @@
 package com.heledron.hologram.graphs3d
 
 import com.heledron.hologram.utilities.block_colors.FindBlockWithColor
-import com.heledron.hologram.utilities.dataStructures.Grid
+import com.heledron.hologram.utilities.data_structures.Grid
 import com.heledron.hologram.utilities.rendering.RenderGroup
 import com.heledron.hologram.utilities.rendering.interpolateTransform
 import com.heledron.hologram.utilities.rendering.renderBlock

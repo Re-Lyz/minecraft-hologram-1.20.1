@@ -191,7 +191,7 @@ fun setupTriangleVisualizer() {
             out
         }
 
-        val lerpDuration = 20f
+        val lerpDuration = 5f
         val lerp = ((currentTick - lastNextTime) / lerpDuration).coerceIn(0f, 1f).eased()
 
         val transformsLerped = transforms.mapIndexed { i, transform ->
@@ -207,7 +207,7 @@ fun setupTriangleVisualizer() {
                     it.teleportDuration = 1
                     it.interpolationDuration = 1
                     it.text = " "
-                    it.backgroundColor = Color.fromARGB(0x5500CCCC)
+                    it.backgroundColor = Color.fromRGB(255,255,0)
                     it.brightness = Display.Brightness(15, 15)
                 },
                 update = {

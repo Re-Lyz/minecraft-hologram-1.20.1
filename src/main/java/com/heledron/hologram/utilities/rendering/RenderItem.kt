@@ -75,12 +75,11 @@ private object EntityTracker {
         }
 
         onPluginShutdown {
-            // removeAll()
-            cleanup()
+            removeAll()
         }
 
-        // remove dangling entities from previous failed shutdowns
-        cleanup()
+        // remove dangling entities from previous crashes / failed shutdowns
+        removeAllByTag()
     }
 
     fun <T : Entity>get(handle: Any, clazz: Class<T>): T? {
@@ -120,12 +119,13 @@ private object EntityTracker {
 
     fun removeAll() {
         for (entity in rendered.values) {
+            if (!component.isAttached(entity)) continue
             entity.remove()
         }
         rendered.clear()
     }
 
-    fun cleanup() {
+    fun removeAllByTag() {
         component.entities().forEach {
             it.remove()
         }

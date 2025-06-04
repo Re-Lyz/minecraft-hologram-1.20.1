@@ -18,6 +18,10 @@ class CustomEntityComponent private constructor(val tag: String)  {
 
     fun entities() = allEntities().filter { it.scoreboardTags.contains(tag) }
 
+    fun isAttached(entity: Entity): Boolean {
+        return entity.scoreboardTags.contains(tag)
+    }
+
     fun onTick(action: (Entity) -> Unit) {
         com.heledron.hologram.utilities.events.onTick {
             entities().forEach { action(it) }

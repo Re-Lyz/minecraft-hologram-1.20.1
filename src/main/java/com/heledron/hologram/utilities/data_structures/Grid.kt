@@ -1,4 +1,4 @@
-package com.heledron.hologram.utilities.dataStructures
+package com.heledron.hologram.utilities.data_structures
 
 class Grid<T>(
     val width: Int,
