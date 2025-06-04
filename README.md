@@ -108,7 +108,7 @@ https://en.wikipedia.org/wiki/Utah_teapot
 Blender Monkey model by the Blender Foundation:  
 https://www.blender.org/
 
-Marching Cubes algorithm referenced from from Nihal Jain:  
+Marching Cubes algorithm referenced from Nihal Jain:  
 https://github.com/nihaljn/marching-cubes
 
 ## License
