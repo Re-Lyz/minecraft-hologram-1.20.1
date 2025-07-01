@@ -161,7 +161,7 @@ fun buildGlobeControls(
             world = world,
             position = position,
             init = {
-                it.teleportDuration = 1
+                it.interpolationDelay    = 1
                 it.interpolationDuration = 1
                 it.itemDisplayTransform = ItemDisplay.ItemDisplayTransform.GUI
                 it.itemStack = icon
@@ -220,7 +220,7 @@ fun buildGlobeControls(
         offset = 1.9f,
         state = globe.state.ui.cloudSpeedSliderState,
         progress = globe.cloudSpeed.normalize(-10f, 10f),
-        icon = ItemStack(Material.WIND_CHARGE),
+        icon = ItemStack(Material.FEATHER),
         transformer = { it.snapTo(.5f, .05f) },
         onChange = { newValue, player ->
             globe.cloudSpeed = newValue.denormalize(-10f, 10f)

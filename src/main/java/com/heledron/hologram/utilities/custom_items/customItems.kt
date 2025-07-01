@@ -72,7 +72,7 @@ class CustomItemComponent(val id: String) {
 fun createNamedItem(material: org.bukkit.Material, name: String): ItemStack {
     val item = ItemStack(material)
     val itemMeta = item.itemMeta ?: throw Exception("ItemMeta is null")
-    itemMeta.setItemName(ChatColor.RESET.toString() + name)
+    itemMeta.setDisplayName(ChatColor.RESET.toString() + name)
     item.itemMeta = itemMeta
     return item
 }

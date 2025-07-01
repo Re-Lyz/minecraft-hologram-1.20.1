@@ -17,7 +17,7 @@ internal fun renderSamplePoints(world: World, position: Vector, cubes: List<Cube
                 world = world,
                 position = position,
                 init = {
-                    it.teleportDuration = 1
+                    it.interpolationDelay = 1
                     it.interpolationDuration = 1
                 },
                 update = {

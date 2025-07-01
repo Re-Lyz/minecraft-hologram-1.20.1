@@ -19,7 +19,7 @@ object GlobeAssets {
     val earthNight = loadImage("earth/night.jpg")//.resizeHeight(80)
 
     // clouds
-    val cloudsDay = loadImage("earth/clouds.jpg").map { color, _, _ -> Color.WHITE.setAlpha(color.red) }
+    val cloudsDay = loadImage("earth/clouds.jpg").map { color, _, _ -> Color.fromRGB(0xFFFFFF).setAlpha(color.red) }
     val cloudsNight = cloudsDay.map { color, _, _ -> Color.fromRGB(0x2a3354).setAlpha(color.alpha) }
     val cloudsHologram = cloudsNight.map { color, _, _ -> Color.fromRGB(0x2fabf5).setAlpha(color.alpha).scaleAlpha(.4f) }
 

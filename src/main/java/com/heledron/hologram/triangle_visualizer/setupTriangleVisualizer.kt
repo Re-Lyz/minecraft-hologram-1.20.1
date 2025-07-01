@@ -204,7 +204,7 @@ fun setupTriangleVisualizer() {
                 world = world,
                 position = origin,
                 init = {
-                    it.teleportDuration = 1
+                    it.interpolationDelay = 1
                     it.interpolationDuration = 1
                     it.text = " "
                     it.backgroundColor = Color.fromRGB(255,255,0)

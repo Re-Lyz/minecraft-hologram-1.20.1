@@ -54,7 +54,8 @@ internal val colorToBlock = run {
             if (woodVariant != null && blocks.containsKey(woodVariant)) continue
 
             // skip spawners
-            if (material == Material.SPAWNER || material == Material.TRIAL_SPAWNER) continue
+            // if (material == Material.SPAWNER || material == Material.TRIAL_SPAWNER) continue
+            if (material == Material.SPAWNER) continue
 
             val newColor = color.withBrightness(brightness)
             if (newColor in out) continue

@@ -70,8 +70,14 @@ fun sendDebugMessage(message: String) {
     Bukkit.getOnlinePlayers().firstOrNull()?.sendActionBar(message)
 }
 
-fun <T : Entity> spawnEntity(location: Location, clazz: Class<T>, initializer: (T) -> Unit): T {
-    return location.world!!.spawn(location, clazz, initializer)
+fun <T : Entity> spawnEntity(
+    location: Location,
+    clazz: Class<T>,
+    initializer: (T) -> Unit
+): T {
+    val entity = location.world!!.spawn(location, clazz)
+    initializer(entity)
+    return entity
 }
 
 fun playSound(location: Location, sound: Sound, volume: Float, pitch: Float) {

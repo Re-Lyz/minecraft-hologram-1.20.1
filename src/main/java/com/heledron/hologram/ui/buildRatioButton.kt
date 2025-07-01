@@ -59,7 +59,7 @@ fun radioButton(
         position = position,
         init = {
             it.text = " "
-            it.teleportDuration = 1
+            it.interpolationDelay    = 1
             it.interpolationDuration = 1
             it.interpolateTransform(Matrix4f(hitboxTransform).mul(textDisplayUnitSquare))
             it.backgroundColor = GlobeAssets.hologramSeaColor
@@ -112,7 +112,7 @@ fun radioButton(
         position = position,
         init = {
             it.alignment = TextDisplay.TextAlignment.LEFT
-            it.teleportDuration = 1
+            it.interpolationDelay    = 1
             it.interpolationDuration = 1
             it.brightness = Display.Brightness(15, 15)
         },
@@ -161,7 +161,7 @@ private fun buildRing(
             position = position,
             init = {
                 it.text = " "
-                it.teleportDuration = 1
+                it.interpolationDelay    = 1
                 it.interpolationDuration = 1
                 it.brightness = Display.Brightness(15, 15)
             },
