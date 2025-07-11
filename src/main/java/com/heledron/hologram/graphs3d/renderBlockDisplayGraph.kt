@@ -39,7 +39,7 @@ internal fun renderBlockDisplayGraph(
             position = position.clone().add(offset),
             init = {
                 val size = (xSize / xResolution).toFloat() * .8f
-                it.teleportDuration = 1
+                it.interpolationDelay = 1
                 it.interpolationDuration = 1
                 it.interpolateTransform(Matrix4f().scale(size).translate(-.5f, -.5f, -.5f))
             },

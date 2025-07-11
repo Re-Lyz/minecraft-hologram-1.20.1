@@ -55,6 +55,13 @@ fun setup3DModels() {
         matrix = Matrix4f().scale(.17f)
     )
 
+    CustomEntityComponent.fromString("EasternGate").attachMesh(
+        mesh = requireMesh("EasternGate.obj"),
+        texture =  flatColorImage(Color.WHITE),
+        emission = flatColorImage(Color.BLACK),
+        matrix = Matrix4f().scale(.17f)
+    )
+
     CustomEntityComponent.fromString("suzanne").attachMesh(
         mesh = requireMesh("suzanne.obj"),
         texture =  flatColorImage(Color.WHITE),

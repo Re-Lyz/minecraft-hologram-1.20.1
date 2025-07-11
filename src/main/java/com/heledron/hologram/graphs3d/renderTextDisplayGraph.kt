@@ -57,7 +57,7 @@ internal fun renderTextDisplayGraph(
                 position = position,
                 init = {
                     it.text = " "
-                    it.teleportDuration = 1
+                    it.interpolationDelay = 1
                     it.interpolationDuration = 1
                     it.brightness = Display.Brightness(15, 15)
                 },
