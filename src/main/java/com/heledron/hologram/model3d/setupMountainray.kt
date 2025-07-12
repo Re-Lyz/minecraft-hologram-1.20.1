@@ -18,6 +18,9 @@ import org.bukkit.Sound
 import org.joml.Matrix4f
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+import java.io.File
+import java.awt.Color as AwtColor
+import java.util.UUID
 
 enum class ShaderType {
     RANDOM,
@@ -55,12 +58,12 @@ fun setup3DModels() {
         matrix = Matrix4f().scale(.17f)
     )
 
-    CustomEntityComponent.fromString("EasternGate").attachMesh(
-        mesh = requireMesh("EasternGate.obj"),
-        texture =  flatColorImage(Color.WHITE),
-        emission = flatColorImage(Color.BLACK),
-        matrix = Matrix4f().scale(.17f)
-    )
+//    CustomEntityComponent.fromString("EasternGate").attachMesh(
+//        mesh = requireMesh("EasternGate.obj"),
+//        texture =  flatColorImage(Color.WHITE),
+//        emission = flatColorImage(Color.BLACK),
+//        matrix = Matrix4f().scale(.17f)
+//    )
 
     CustomEntityComponent.fromString("suzanne").attachMesh(
         mesh = requireMesh("suzanne.obj"),
@@ -90,6 +93,83 @@ fun setup3DModels() {
         player.sendActionBar(name)
         playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 2f)
     }
+}
+
+fun loadExternalModel(dir: File, id: String) {
+    val meshFile = File(dir, "$id.obj")
+    require(meshFile.exists()) { "缺少模型文件: ${meshFile.name}" }
+    val mesh: ObjMesh = parseObjFileContents(meshFile.readText())
+
+    val texFile = File(dir, "$id.png")
+    val texture: BufferedImage = if (texFile.exists()) {
+        ImageIO.read(texFile)
+    } else {
+        BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).apply {
+            setRGB(0, 0, AwtColor.WHITE.rgb)
+        }
+    }
+
+    val emFile = File(dir, "${id}_emission.png")
+    val emission: BufferedImage = if (emFile.exists()) {
+        ImageIO.read(emFile)
+    } else {
+        BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).apply {
+            setRGB(0, 0, AwtColor.BLACK.rgb)
+        }
+    }
+
+    ExternalModelRegistry.models[id] = ExternalModelRegistry.ModelData(
+        mesh = mesh,
+        texture = texture,
+        emission = emission,
+    )
+
+//    CustomEntityComponent.fromString(id).attachMesh(
+//        mesh     = mesh,
+//        texture  = texture,
+//        emission = emission,
+//        matrix = Matrix4f().scale(.17f)
+//    )
+
+//    val juvFile = File(dir, "${id}_juvenile.png")
+//    if (juvFile.exists()) {
+//        val juvTex = ImageIO.read(juvFile)
+//        CustomEntityComponent.fromString("${id}_juvenile").attachMesh(
+//            mesh     = mesh,
+//            texture  = juvTex,
+//            emission = emission,
+//            matrix   = Matrix4f().scale(0.5f)
+//        )
+//    }
+}
+
+fun renderExternalModel(
+    id: String,
+    scale: Float = 1f,
+    rotX: Float = 0f,
+    rotY: Float = 0f,
+    rotZ: Float = 0f
+):String {
+    val data = ExternalModelRegistry.models[id]?: throw IllegalArgumentException("模型 '$id' 未注册")
+
+    // 构造变换矩阵
+    val matrix = Matrix4f()
+        .scale(scale)
+        .rotateX(rotX)
+        .rotateY(rotY)
+        .rotateZ(rotZ)
+
+    // 用 UUID 生成唯一 component 名称，保证每次都能重复 attach
+    val uniqueComponentId = "${id}_${UUID.randomUUID()}"
+
+    CustomEntityComponent.fromString(uniqueComponentId).attachMesh(
+        mesh     = data.mesh,
+        texture  = data.texture,
+        emission = data.emission,
+        matrix   = matrix
+    )
+
+    return uniqueComponentId
 }
 
 private fun requireImage(path: String) = requireResource(path).use { ImageIO.read(it) }

@@ -13,6 +13,14 @@ commands:
   globe_presets:
     description: Set globe presets
     permission: hologram.globe_presets
+  model:
+    description: Manage external models
+    usage: |
+      /model add <model>
+      /model render <model> [scale] [rotX] [rotY] [rotZ]
+      /model list
+      /model help
+    permission: hologram.model.manage
 
 permissions:
   hologram.items:
@@ -23,4 +31,7 @@ permissions:
     default: op
   hologram.globe_presets:
     description: Allows access to the globe_presets command
+    default: op
+  hologram.model.manage:
+    description: Custom models management
     default: op
