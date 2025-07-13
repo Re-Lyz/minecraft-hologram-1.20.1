@@ -20,6 +20,7 @@ commands:
       /model render <model> [scale] [rotX] [rotY] [rotZ]
       /model list
       /model help
+      /model remove <model>
     permission: hologram.model.manage
 
 permissions:

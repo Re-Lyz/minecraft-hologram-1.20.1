@@ -29,6 +29,7 @@ internal fun renderTriangles(
     texture: Shader,
     emission: Shader,
     matrix: Matrix4f,
+
 ): RenderGroup {
     val renderItems = RenderGroup()
 
@@ -52,6 +53,7 @@ internal fun renderTriangles(
                 init = {
                     it.text = " "
                     it.setTransformationMatrix(Matrix4f(matrix).mul(piece))
+
                 },
                 update = {
                     val normal = it.transformation.normal()
@@ -61,6 +63,7 @@ internal fun renderTriangles(
                     it.backgroundColor = texture
                     it.brightness = Display.Brightness((emission * 15).toInt(), 15)
                     it.interpolationDuration = 1
+
                 }
             )
         }

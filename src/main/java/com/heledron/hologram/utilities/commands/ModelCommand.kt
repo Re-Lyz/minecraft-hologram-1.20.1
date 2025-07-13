@@ -1,0 +1,191 @@
+package com.heledron.hologram.utilities.commands
+
+import com.heledron.hologram.model3d.loadExternalModel
+import com.heledron.hologram.model3d.ExternalModelRegistry
+import com.heledron.hologram.model3d.renderExternalModel
+
+import com.heledron.hologram.model3d.KEY_MODEL_NAME
+import com.heledron.hologram.model3d.KEY_SCALE
+import com.heledron.hologram.model3d.KEY_ROTX
+import com.heledron.hologram.model3d.KEY_ROTY
+import com.heledron.hologram.model3d.KEY_ROTZ
+import com.heledron.hologram.model3d.KEY_WORLD
+import com.heledron.hologram.model3d.KEY_POS_X
+import com.heledron.hologram.model3d.KEY_POS_Z
+import org.bukkit.persistence.PersistentDataType
+
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Marker
+import org.bukkit.entity.Player
+import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
+import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
+import java.io.FileFilter
+
+
+
+class ModelCommand(
+    private val plugin: JavaPlugin,
+    private val modelsDir: File
+) : CommandExecutor, TabCompleter {
+
+    override fun onCommand(
+        sender: CommandSender,
+        command: Command,
+        label: String,
+        args: Array<out String>
+    ): Boolean {
+        if (args.isEmpty() || args[0].equals("help", true)) {
+            return usage(sender)
+        }
+
+        when (args[0].lowercase()) {
+            "add" -> {
+                if (args.size != 2) return usage(sender)
+                val id = args[1]
+                val dir = File(modelsDir, id)
+                if (!dir.exists() || !dir.isDirectory) {
+                    sender.sendMessage("§c模型 '$id' 不存在：${dir.path}")
+                    return true
+                }
+                try {
+                    loadExternalModel(dir, id)
+                    sender.sendMessage("§a模型 '$id' 已成功加载并注册！")
+                } catch (e: Exception) {
+                    sender.sendMessage("§c加载模型 '$id' 时出错：${e.message}")
+                }
+                return true
+            }
+
+            "render" -> {
+                if (args.size < 2) return usage(sender)
+                val id = args[1]
+                if (!ExternalModelRegistry.models.containsKey(id)) {
+                    sender.sendMessage("§c模型 '$id' 未加载，请先 `/model add $id`")
+                    return true
+                }
+
+                // 解析 scale/rotX/rotY/rotZ
+                val scale = args.getOrNull(2)?.toFloatOrNull() ?: 1f
+                val rotX  = args.getOrNull(3)?.toFloatOrNull() ?: 0f
+                val rotY  = args.getOrNull(4)?.toFloatOrNull() ?: 0f
+                val rotZ  = args.getOrNull(5)?.toFloatOrNull() ?: 0f
+
+                // 渲染并获取唯一的 componentId
+                val uniqueComponentId = renderExternalModel(id, scale, rotX, rotY, rotZ)
+
+                // 召唤 Marker 实体并打2个 tag：componentId + 模型名
+                val player = sender as? Player ?: run {
+                    sender.sendMessage("§c只有玩家才能执行此命令。")
+                    return true
+                }
+                val marker = player.world
+                    .spawnEntity(player.location, EntityType.MARKER) as Marker
+
+                marker.addScoreboardTag(uniqueComponentId) // 用于render
+                marker.addScoreboardTag(id)                // 用于批量删除实体
+                marker.persistentDataContainer.set(
+                    KEY_MODEL_NAME, PersistentDataType.STRING, id
+                )
+                marker.persistentDataContainer.set(
+                    KEY_SCALE, PersistentDataType.DOUBLE, scale.toDouble()
+                )
+                marker.persistentDataContainer.set(
+                    KEY_ROTX, PersistentDataType.DOUBLE, rotX.toDouble()
+                )
+                marker.persistentDataContainer.set(
+                    KEY_ROTY, PersistentDataType.DOUBLE, rotY.toDouble()
+                )
+                marker.persistentDataContainer.set(
+                    KEY_ROTZ, PersistentDataType.DOUBLE, rotZ.toDouble()
+                )
+                marker.persistentDataContainer.set(
+                    KEY_WORLD, PersistentDataType.STRING, marker.world.name
+                )
+                marker.persistentDataContainer.set(
+                    KEY_POS_X, PersistentDataType.INTEGER, marker.location.blockX shr 4
+                )
+                marker.persistentDataContainer.set(
+                    KEY_POS_Z, PersistentDataType.INTEGER, marker.location.blockZ shr 4
+                )
+                sender.sendMessage(
+                    "§a已渲染模型 '$id' (scale=$scale, rot=[$rotX, $rotY, $rotZ])，"
+                )
+                return true
+            }
+
+            "remove" -> {
+                if (args.size != 2) return usage(sender)
+                val tagId = args[1]
+                var removedCount = 0
+                // 遍历所有世界，删除带有该 tag 的所有实体
+                plugin.server.worlds.forEach { world ->
+                    world.entities
+                        .filter { it.scoreboardTags.contains(tagId) }
+                        .forEach {
+                            it.remove()
+                            removedCount++
+                        }
+                }
+                sender.sendMessage("§a已移除 $removedCount 个 '$tagId' 的实体。")
+                return true
+            }
+
+            "list" -> {
+                val models = ExternalModelRegistry.models.keys
+                if (models.isEmpty()) {
+                    sender.sendMessage("§e当前没有已加载的外部模型。")
+                } else {
+                    sender.sendMessage("§a已加载的外部模型: ${models.joinToString(", ")}")
+                }
+                return true
+            }
+
+            else -> return usage(sender)
+        }
+    }
+
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        alias: String,
+        args: Array<out String>
+    ): List<String> {
+        val subcommands = listOf("add", "render", "remove", "list", "help")
+        return when (args.size) {
+            1 -> subcommands.filter { it.startsWith(args[0].lowercase()) }
+            2 -> when (args[0].lowercase()) {
+                "add" -> modelsDir
+                    .listFiles(FileFilter { it.isDirectory })
+                    ?.map { it.name }
+                    ?.filter { it.startsWith(args[1]) }
+                    ?: emptyList()
+                "render" -> ExternalModelRegistry.models.keys
+                    .filter { it.startsWith(args[1]) }
+                    .toList()
+                "remove" -> modelsDir
+                    .listFiles(FileFilter { it.isDirectory })
+                    ?.map { it.name }
+                    ?.filter { it.startsWith(args[1]) }
+                    ?: emptyList()
+                else -> emptyList()
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun usage(sender: CommandSender): Boolean {
+        sender.sendMessage("§6=== HologramPlugin 模型管理 Help ===")
+        sender.sendMessage("§a/model add <模型名>  §7加载并注册一个外部模型")
+        sender.sendMessage("§a/model render <模型名> [scale] [rotX] [rotY] [rotZ] §7召唤并渲染模型")
+        sender.sendMessage("§a/model remove <tagId> §7删除指定 tagId 的渲染实体")
+        sender.sendMessage("§a/model list §7列出所有已加载的外部模型")
+        sender.sendMessage("§a/model help §7显示此帮助")
+
+        return true
+    }
+}
+
