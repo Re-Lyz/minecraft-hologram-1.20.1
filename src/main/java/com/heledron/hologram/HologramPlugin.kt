@@ -7,7 +7,7 @@ import com.heledron.hologram.model3d.setup3DModels
 import com.heledron.hologram.model3d.loadExternalModel
 import com.heledron.hologram.model3d.registerChunkLoadRestore
 import com.heledron.hologram.model3d.initExternalModelPersistence
-import com.heledron.hologram.model3d.rebuildExternalModels
+
 
 import com.heledron.hologram.triangle_visualizer.setupTriangleVisualizer
 import com.heledron.hologram.triangle_visualizer.setupUnitTriangleVisualizer
@@ -34,12 +34,13 @@ class HologramPlugin : JavaPlugin() {
             dataFolder.mkdirs()
         }
         val modelsDir = File(dataFolder, "models").apply { if (!exists()) mkdirs() }
+        val schemDir  = File(dataFolder, "schem").apply  { if (!exists()) mkdirs() }
 
-        val modelCommand = ModelCommand(this, modelsDir)
+        val modelCommand = ModelCommand(this, modelsDir,schemDir)
         getCommand("model")?.setExecutor(modelCommand)
         getCommand("model")?.tabCompleter = modelCommand
 
-        // 插件启动时自动加载 modelsDir 下的所有模型目录
+
         modelsDir
             .listFiles(FileFilter { it.isDirectory })
             ?.forEach { dir ->
@@ -51,7 +52,6 @@ class HologramPlugin : JavaPlugin() {
                     logger.severe("§c[HologramPlugin] 加载模型 '$id' 失败: ${ex.message}")
                 }
             }
-        rebuildExternalModels(this)
 
         setupCoreUtils()
         setupCustomItemCommand()

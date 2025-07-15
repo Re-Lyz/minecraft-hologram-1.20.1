@@ -251,52 +251,6 @@ fun registerChunkLoadRestore(plugin: JavaPlugin) {
     }, plugin)
 }
 
-fun rebuildExternalModels(plugin: JavaPlugin) {
-    plugin.server.worlds.forEach { world ->
-        world.entities
-            .filterIsInstance<Marker>()
-            // 只处理那些 PDC 里带我们数据的 marker
-            .filter { it.persistentDataContainer.has(KEY_MODEL_NAME, PersistentDataType.STRING) }
-            .forEach { marker ->
-                // —— 读取 PDC ——
-                val modelName = marker.persistentDataContainer
-                    .get(KEY_MODEL_NAME, PersistentDataType.STRING)!!
-                val scale = marker.persistentDataContainer
-                    .get(KEY_SCALE, PersistentDataType.DOUBLE)!!.toFloat()
-                val rotx  = marker.persistentDataContainer
-                    .get(KEY_ROTX, PersistentDataType.DOUBLE)!!.toFloat()
-                val roty  = marker.persistentDataContainer
-                    .get(KEY_ROTY, PersistentDataType.DOUBLE)!!.toFloat()
-                val rotz  = marker.persistentDataContainer
-                    .get(KEY_ROTZ, PersistentDataType.DOUBLE)!!.toFloat()
-
-                // —— 重建矩阵 & 渲染回调 ——
-                val matrix = Matrix4f()
-                    .scale(scale)
-                    .rotateX(rotx)
-                    .rotateY(roty)
-                    .rotateZ(rotz)
-
-                val data = ExternalModelRegistry.models[modelName] ?: return@forEach
-                val componentId = marker.scoreboardTags.first { it != modelName && it.startsWith("${modelName}_") }
-                plugin.logger.info(
-                    "[HologramPlugin] Rebuilding external model '$modelName' " +
-                            "(componentId=$componentId) at ${marker.location}"
-                )
-
-                CustomEntityComponent
-                    .fromString(componentId)
-                    .attachMesh(
-                        mesh     = data.mesh,
-                        texture  = data.texture,
-                        emission = data.emission,
-                        matrix   = matrix,
-                    )
-            }
-    }
-}
-
-
 
 private fun requireImage(path: String) = requireResource(path).use { ImageIO.read(it) }
 private fun requireMesh(path: String) = requireResource(path)

@@ -3,6 +3,7 @@ package com.heledron.hologram.utilities.commands
 import com.heledron.hologram.model3d.loadExternalModel
 import com.heledron.hologram.model3d.ExternalModelRegistry
 import com.heledron.hologram.model3d.renderExternalModel
+import com.heledron.hologram.utilities.rendering.SchematicBlockRenderer
 
 import com.heledron.hologram.model3d.KEY_MODEL_NAME
 import com.heledron.hologram.model3d.KEY_SCALE
@@ -29,7 +30,8 @@ import java.io.FileFilter
 
 class ModelCommand(
     private val plugin: JavaPlugin,
-    private val modelsDir: File
+    private val modelsDir: File,
+    private val schemDir: File
 ) : CommandExecutor, TabCompleter {
 
     override fun onCommand(
@@ -144,6 +146,40 @@ class ModelCommand(
                 return true
             }
 
+            "block" ->{
+                if (args.size < 2) return usage(sender)
+                val id = args[1]
+                val scale = args.getOrNull(2)?.toFloatOrNull() ?: 1f
+                val rotX  = args.getOrNull(3)?.toFloatOrNull() ?: 0f
+                val rotY  = args.getOrNull(4)?.toFloatOrNull() ?: 0f
+                val rotZ  = args.getOrNull(5)?.toFloatOrNull() ?: 0f
+
+
+                val file = File(schemDir, "$id.schem")
+                if (!file.exists()) {
+                    sender.sendMessage("§cSchematic '$id' 不存在：${file.path}")
+                    return true
+                }
+
+                val player = sender as? Player ?: run {
+                    sender.sendMessage("§c只有玩家才能执行此命令。")
+                    return true
+                }
+
+                try {
+                    val count = SchematicBlockRenderer.render(
+                        file,player.location,scale,rotX,rotY,rotZ
+                    )
+                    sender.sendMessage(
+                        "§a已渲染schematic '$id' 共 $count 个 BlockDisplay，"
+                    )
+                }catch (e: Exception){
+                    sender.sendMessage("§c渲染 schematic 时出错：${e.message}")
+                }
+
+                return true
+            }
+
             else -> return usage(sender)
         }
     }
@@ -154,7 +190,7 @@ class ModelCommand(
         alias: String,
         args: Array<out String>
     ): List<String> {
-        val subcommands = listOf("add", "render", "remove", "list", "help")
+        val subcommands = listOf("add", "render", "remove", "list","block", "help")
         return when (args.size) {
             1 -> subcommands.filter { it.startsWith(args[0].lowercase()) }
             2 -> when (args[0].lowercase()) {
@@ -171,6 +207,11 @@ class ModelCommand(
                     ?.map { it.name }
                     ?.filter { it.startsWith(args[1]) }
                     ?: emptyList()
+                "block" -> schemDir
+                    .listFiles { f -> f.extension=="schem" }
+                    ?.map { it.nameWithoutExtension }
+                    ?.filter { it.startsWith(args[1]) }
+                    ?: emptyList()
                 else -> emptyList()
             }
             else -> emptyList()
@@ -183,6 +224,7 @@ class ModelCommand(
         sender.sendMessage("§a/model render <模型名> [scale] [rotX] [rotY] [rotZ] §7召唤并渲染模型")
         sender.sendMessage("§a/model remove <tagId> §7删除指定 tagId 的渲染实体")
         sender.sendMessage("§a/model list §7列出所有已加载的外部模型")
+        sender.sendMessage("§a/model block §7渲染shcem（需要安装worldedit插件）")
         sender.sendMessage("§a/model help §7显示此帮助")
 
         return true
