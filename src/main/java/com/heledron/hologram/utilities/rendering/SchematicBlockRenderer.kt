@@ -46,7 +46,6 @@ object SchematicBlockRenderer {
             ?: throw IllegalArgumentException("不支持的 schematic 格式: ${schem.name}")
         val clipboard = format.getReader(Files.newInputStream(schem.toPath())).read()
         val region    = clipboard.region
-        val originVec = clipboard.origin
 
         val world = originLoc.world
             ?: throw IllegalArgumentException("World 为空")
@@ -54,16 +53,16 @@ object SchematicBlockRenderer {
         // 2. 计算几何中心
         val min = region.minimumPoint
         val max = region.maximumPoint
-        val centerX = (min.getX() + max.getX() - 1) / 2.0
-        val centerY = (min.getY() + max.getY() - 1) / 2.0
-        val centerZ = (min.getZ() + max.getZ() - 1) / 2.0
+        val centerX = (min.x + max.x - 1) / 2.0
+        val centerY = (min.y + max.y - 1) / 2.0
+        val centerZ = (min.z + max.z - 1) / 2.0
 
         // 3. 将中心对齐到 originLoc，生成 Marker
-        val worldCX = originLoc.blockX + (centerX - originVec.getX())
-        val worldCY = originLoc.blockY + (centerY - originVec.getY())
-        val worldCZ = originLoc.blockZ + (centerZ - originVec.getZ())
-        val markerLoc = Location(world, worldCX , worldCY, worldCZ)
-
+        val markerLoc = originLoc.clone().also {
+            it.y=it.y+1
+            it.yaw = 0f
+            it.pitch = 0f
+        }
 
         // 4. 预计算旋转三角
         val radX = Math.toRadians(rotX.toDouble()).toFloat()
@@ -82,10 +81,9 @@ object SchematicBlockRenderer {
                     if (weState.blockType.material.isAir()) continue
 
                     // 1) 本地中心化坐标
-                    var lx = (x - originVec.x).toFloat()
-                    var ly = (y - originVec.y).toFloat()
-                    var lz = (z - originVec.z).toFloat()
-
+                    var lx = (x - centerX).toFloat()
+                    var ly = (y - centerY).toFloat()
+                    var lz = (z - centerZ).toFloat()
                     // 2) 逐轴旋转（先 X→Y→Z）
                     run {
                         val ny = ly * cosX - lz * sinX
@@ -138,4 +136,7 @@ object SchematicBlockRenderer {
 
         return count
     }
+
+
+
 }

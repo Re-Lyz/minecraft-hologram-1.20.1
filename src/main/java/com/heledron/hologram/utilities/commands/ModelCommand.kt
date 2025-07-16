@@ -1,31 +1,18 @@
 package com.heledron.hologram.utilities.commands
 
-import com.heledron.hologram.model3d.loadExternalModel
-import com.heledron.hologram.model3d.ExternalModelRegistry
-import com.heledron.hologram.model3d.renderExternalModel
+import com.heledron.hologram.model3d.*
 import com.heledron.hologram.utilities.rendering.SchematicBlockRenderer
-
-import com.heledron.hologram.model3d.KEY_MODEL_NAME
-import com.heledron.hologram.model3d.KEY_SCALE
-import com.heledron.hologram.model3d.KEY_ROTX
-import com.heledron.hologram.model3d.KEY_ROTY
-import com.heledron.hologram.model3d.KEY_ROTZ
-import com.heledron.hologram.model3d.KEY_WORLD
-import com.heledron.hologram.model3d.KEY_POS_X
-import com.heledron.hologram.model3d.KEY_POS_Z
-import org.bukkit.persistence.PersistentDataType
-
-import org.bukkit.entity.EntityType
-import org.bukkit.entity.Marker
-import org.bukkit.entity.Player
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Marker
+import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.io.FileFilter
-
 
 
 class ModelCommand(
@@ -148,36 +135,51 @@ class ModelCommand(
 
             "block" ->{
                 if (args.size < 2) return usage(sender)
-                val id = args[1]
-                val scale = args.getOrNull(2)?.toFloatOrNull() ?: 1f
-                val rotX  = args.getOrNull(3)?.toFloatOrNull() ?: 0f
-                val rotY  = args.getOrNull(4)?.toFloatOrNull() ?: 0f
-                val rotZ  = args.getOrNull(5)?.toFloatOrNull() ?: 0f
-
-
-                val file = File(schemDir, "$id.schem")
-                if (!file.exists()) {
-                    sender.sendMessage("§cSchematic '$id' 不存在：${file.path}")
-                    return true
-                }
 
                 val player = sender as? Player ?: run {
                     sender.sendMessage("§c只有玩家才能执行此命令。")
                     return true
                 }
 
-                try {
-                    val count = SchematicBlockRenderer.render(
-                        file,player.location,scale,rotX,rotY,rotZ
-                    )
-                    sender.sendMessage(
-                        "§a已渲染schematic '$id' 共 $count 个 BlockDisplay，"
-                    )
-                }catch (e: Exception){
-                    sender.sendMessage("§c渲染 schematic 时出错：${e.message}")
+                when (args[1].lowercase()) {
+                    "render" ->{
+                        val id = args[2]
+                        val scale = args.getOrNull(3)?.toFloatOrNull() ?: 0.1f
+                        val rotX  = args.getOrNull(4)?.toFloatOrNull() ?: 0f
+                        val rotY  = args.getOrNull(5)?.toFloatOrNull() ?: 0f
+                        val rotZ  = args.getOrNull(6)?.toFloatOrNull() ?: 0f
+
+
+                        val file = File(schemDir, "$id.schem")
+                        if (!file.exists()) {
+                            sender.sendMessage("§cSchematic '$id' 不存在：${file.path}")
+                            return true
+                        }
+
+                        try {
+                            val count = SchematicBlockRenderer.render(
+                                file,player.location,scale,rotX,rotY,rotZ
+                            )
+                            sender.sendMessage(
+                                "§a已渲染schematic '$id' 共 $count 个 BlockDisplay，"
+                            )
+                        }catch (e: Exception){
+                            sender.sendMessage("§c渲染 schematic 时出错：${e.message}")
+                        }
+
+                        return true
+                    }
+
+                    "rotate" ->{
+
+
+
+                    }
+
+                    else -> return usage(sender)
                 }
 
-                return true
+                return usage(sender)
             }
 
             else -> return usage(sender)
@@ -202,29 +204,54 @@ class ModelCommand(
                 "render" -> ExternalModelRegistry.models.keys
                     .filter { it.startsWith(args[1]) }
                     .toList()
-                "remove" -> modelsDir
-                    .listFiles(FileFilter { it.isDirectory })
-                    ?.map { it.name }
-                    ?.filter { it.startsWith(args[1]) }
-                    ?: emptyList()
-                "block" -> schemDir
-                    .listFiles { f -> f.extension=="schem" }
-                    ?.map { it.nameWithoutExtension }
-                    ?.filter { it.startsWith(args[1]) }
-                    ?: emptyList()
+                "remove" ->  run {
+                    val modelNames = modelsDir.listFiles()
+                        ?.filter { it.isDirectory }
+                        ?.map { it.name }
+                        ?: emptyList()
+
+                    val schemNames = schemDir.listFiles()
+                        ?.filter { it.extension == "schem" }
+                        ?.map { it.nameWithoutExtension }
+                        ?: emptyList()
+
+                    (modelNames + schemNames)
+                        .distinct()
+                        .filter { it.startsWith(args[1], ignoreCase = true) }
+                }
+                "block" -> listOf("render", "rotate")
+                    .filter { it.startsWith(args[1].lowercase()) }
                 else -> emptyList()
             }
+
+            3-> when (args[0].lowercase()) {
+                "add" -> emptyList()
+                "render" -> emptyList()
+                "remove"-> emptyList()
+                "list" -> emptyList()
+                "block" -> when (args[1].lowercase()) {
+                    "render", "rotate" -> schemDir
+                    .listFiles { f -> f.extension == "schem" }
+                    ?.map { it.nameWithoutExtension }
+                    ?.filter { it.startsWith(args[2]) }
+                    ?: emptyList()
+                    else -> emptyList()
+                }
+                else -> emptyList()
+            }
+
             else -> emptyList()
         }
     }
 
     private fun usage(sender: CommandSender): Boolean {
-        sender.sendMessage("§6=== HologramPlugin 模型管理 Help ===")
-        sender.sendMessage("§a/model add <模型名>  §7加载并注册一个外部模型")
-        sender.sendMessage("§a/model render <模型名> [scale] [rotX] [rotY] [rotZ] §7召唤并渲染模型")
+        sender.sendMessage("§6=== HologramPlugin 模型渲染管理 Help ===")
+        sender.sendMessage("§a/model add <name>  §7加载并注册一个外部模型")
+        sender.sendMessage("§a/model render <name> [scale] [rotX] [rotY] [rotZ] §7召唤并渲染模型")
         sender.sendMessage("§a/model remove <tagId> §7删除指定 tagId 的渲染实体")
         sender.sendMessage("§a/model list §7列出所有已加载的外部模型")
-        sender.sendMessage("§a/model block §7渲染shcem（需要安装worldedit插件）")
+        sender.sendMessage("§a/model block render <name> [scale] [rotX] [rotY] [rotZ] §7渲染shcem（需要安装worldedit插件）")
+        sender.sendMessage("§a/model block rotate <name> [speed] §7旋转block模型")
         sender.sendMessage("§a/model help §7显示此帮助")
 
         return true
