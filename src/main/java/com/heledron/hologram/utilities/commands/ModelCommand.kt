@@ -9,8 +9,14 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Marker
 import org.bukkit.entity.Player
-import org.bukkit.persistence.PersistentDataType
+import org.bukkit.entity.BlockDisplay
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.persistence.PersistentDataType
+import org.bukkit.NamespacedKey
+import org.bukkit.scheduler.BukkitTask
+import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.util.Vector
+
 import java.io.File
 import java.io.FileFilter
 
@@ -20,6 +26,12 @@ class ModelCommand(
     private val modelsDir: File,
     private val schemDir: File
 ) : CommandExecutor, TabCompleter {
+    private val keyRotationAngle = NamespacedKey(plugin, "rotation_angle")
+    private val rotationTasks = mutableMapOf<String, BukkitTask>()
+    private val keyOrbitSpeed = NamespacedKey(plugin, "orbit_speed")
+    private val keyInitDx     = NamespacedKey(plugin, "init_dx")
+    private val keyInitDz     = NamespacedKey(plugin, "init_dz")
+
 
     override fun onCommand(
         sender: CommandSender,
@@ -30,6 +42,7 @@ class ModelCommand(
         if (args.isEmpty() || args[0].equals("help", true)) {
             return usage(sender)
         }
+
 
         when (args[0].lowercase()) {
             "add" -> {
@@ -172,14 +185,90 @@ class ModelCommand(
 
                     "rotate" ->{
 
+                        val id = args.getOrNull(2) ?: return usage(sender)
 
+                        // —— 仅 name 参数：停止公转 ——
+                        if (args.size == 3) {
+                            rotationTasks.remove(id)?.cancel()
+                            sender.sendMessage("§a模型 '$id' 已停止公转。")
+                            return true
+                        }
+
+                        // —— name + speed 参数：启动/更新公转 ——
+                        val speed: Double = args.getOrNull(3)?.toDoubleOrNull() ?: 0.05
+
+                        // 先取消旧任务
+                        rotationTasks.remove(id)?.cancel()
+
+                        // 收集所有带 tag=id 的 BlockDisplay
+                        val displays = plugin.server.worlds
+                            .flatMap { it.entities.filterIsInstance<BlockDisplay>() }
+                            .filter { it.scoreboardTags.contains(id) }
+
+                        if (displays.isEmpty()) {
+                            sender.sendMessage("§c没有找到模型 '$id' 的 BlockDisplay 实体。")
+                            return true
+                        }
+
+                        // 计算质心（所有 display 坐标平均）
+
+                        val sumVec = displays.fold(Vector(0.0, 0.0, 0.0)) { acc, disp ->
+                            acc.add(disp.location.toVector())
+                        }
+                        val centerVec = sumVec.multiply(1.0 / displays.size)
+
+                        val world     = displays.first().world
+                        val centerLoc = centerVec.toLocation(world)
+
+                        // 初始化每个 display 的 PDC：dx、dz、orbit_speed、angle
+                        displays.forEach { disp ->
+                            val dx = (disp.location.x - centerLoc.x).toFloat()
+                            val dz = (disp.location.z - centerLoc.z).toFloat()
+                            val pdc = disp.persistentDataContainer
+                            pdc.set(keyInitDx,     PersistentDataType.FLOAT, dx)
+                            pdc.set(keyInitDz,     PersistentDataType.FLOAT, dz)
+                            pdc.set(keyOrbitSpeed, PersistentDataType.DOUBLE, speed)
+                            pdc.set(keyRotationAngle, PersistentDataType.DOUBLE, 0.0)
+                        }
+
+                        // 启动每 tick 更新一次的任务，实现公转
+                        val task = object : BukkitRunnable() {
+                            override fun run() {
+                                displays.forEach { disp ->
+                                    val pdc = disp.persistentDataContainer
+
+                                    // 读取初始偏移与速度
+                                    val dx    = pdc.get(keyInitDx,     PersistentDataType.FLOAT)!!
+                                    val dz    = pdc.get(keyInitDz,     PersistentDataType.FLOAT)!!
+                                    val spd   = pdc.get(keyOrbitSpeed, PersistentDataType.DOUBLE)!!
+                                    // 更新角度
+                                    val angle = pdc.get(keyRotationAngle, PersistentDataType.DOUBLE)!! + spd
+                                    pdc.set(keyRotationAngle, PersistentDataType.DOUBLE, angle)
+
+                                    // 计算新坐标
+                                    val cosA = kotlin.math.cos(angle)
+                                    val sinA = kotlin.math.sin(angle)
+                                    val newX = centerLoc.x + dx * cosA - dz * sinA
+                                    val newZ = centerLoc.z + dx * sinA + dz * cosA
+
+                                    // 传送实体
+                                    val loc = disp.location.clone()
+                                    loc.x = newX
+                                    loc.z = newZ
+                                    disp.teleport(loc)
+                                }
+                            }
+                        }.runTaskTimer(plugin, 0L, 1L)
+
+                        rotationTasks[id] = task
+                        sender.sendMessage("§a模型 '$id' 已开始以 $speed rad/tick 公转。")
+                        return true
 
                     }
 
                     else -> return usage(sender)
                 }
 
-                return usage(sender)
             }
 
             else -> return usage(sender)
