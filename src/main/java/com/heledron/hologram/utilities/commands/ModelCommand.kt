@@ -28,10 +28,16 @@ class ModelCommand(
 ) : CommandExecutor, TabCompleter {
     private val keyRotationAngle = NamespacedKey(plugin, "rotation_angle")
     private val rotationTasks = mutableMapOf<String, BukkitTask>()
+    private val fluctuationTasks = mutableMapOf<String, BukkitTask>()
+
     private val keyOrbitSpeed = NamespacedKey(plugin, "orbit_speed")
     private val keyInitDx     = NamespacedKey(plugin, "init_dx")
     private val keyInitDz     = NamespacedKey(plugin, "init_dz")
 
+    private val keyInitDy             = NamespacedKey(plugin, "init_dy")
+    private val keyFluctuateAmplitude = NamespacedKey(plugin, "fluctuate_amp")
+    private val keyFluctuateSpeed     = NamespacedKey(plugin, "fluctuate_speed")
+    private val keyFluctuateAngle     = NamespacedKey(plugin, "fluctuate_angle")
 
     override fun onCommand(
         sender: CommandSender,
@@ -187,20 +193,16 @@ class ModelCommand(
 
                         val id = args.getOrNull(2) ?: return usage(sender)
 
-                        // —— 仅 name 参数：停止公转 ——
                         if (args.size == 3) {
                             rotationTasks.remove(id)?.cancel()
                             sender.sendMessage("§a模型 '$id' 已停止公转。")
                             return true
                         }
 
-                        // —— name + speed 参数：启动/更新公转 ——
                         val speed: Double = args.getOrNull(3)?.toDoubleOrNull() ?: 0.05
 
-                        // 先取消旧任务
                         rotationTasks.remove(id)?.cancel()
 
-                        // 收集所有带 tag=id 的 BlockDisplay
                         val displays = plugin.server.worlds
                             .flatMap { it.entities.filterIsInstance<BlockDisplay>() }
                             .filter { it.scoreboardTags.contains(id) }
@@ -251,11 +253,17 @@ class ModelCommand(
                                     val newX = centerLoc.x + dx * cosA - dz * sinA
                                     val newZ = centerLoc.z + dx * sinA + dz * cosA
 
-                                    // 传送实体
-                                    val loc = disp.location.clone()
-                                    loc.x = newX
-                                    loc.z = newZ
-                                    disp.teleport(loc)
+
+                                    val steps = 5
+                                    val oldLoc = disp.location.clone()
+                                    val deltaX = (newX - oldLoc.x) / steps
+                                    val deltaZ = (newZ - oldLoc.z) / steps
+
+                                    for (i in 1..steps) {
+                                        val intermediate = oldLoc.clone().add(deltaX * i, 0.0, deltaZ * i)
+                                        disp.teleport(intermediate)
+                                    }
+
                                 }
                             }
                         }.runTaskTimer(plugin, 0L, 1L)
@@ -266,6 +274,71 @@ class ModelCommand(
 
                     }
 
+                    "fluctuate" -> {
+                        // id 参数必填
+                        val id = args.getOrNull(2) ?: return usage(sender)
+
+                        // 只有 name：停止浮动
+                        if (args.size == 3) {
+                            fluctuationTasks.remove(id)?.cancel()
+                            sender.sendMessage("§a模型 '$id' 已停止浮动。")
+                            return true
+                        }
+
+                        // name + amplitude：启动/更新浮动，默认幅度 0.5
+                        val amplitude: Double = args.getOrNull(3)?.toDoubleOrNull() ?: 0.5
+                        val speed: Double = args.getOrNull(3)?.toDoubleOrNull() ?: 0.1
+                        // 先取消已有任务
+                        fluctuationTasks.remove(id)?.cancel()
+
+                        // 收集所有带 tag=id 的 BlockDisplay
+                        val displays = plugin.server.worlds
+                            .flatMap { it.entities.filterIsInstance<BlockDisplay>() }
+                            .filter { it.scoreboardTags.contains(id) }
+
+                        if (displays.isEmpty()) {
+                            sender.sendMessage("§c没有找到模型 '$id' 的 BlockDisplay 实体。")
+                            return true
+                        }
+
+                        // 初始化每个 display 的 PDC：initDy、amplitude、speed、angle
+                        displays.forEach { disp ->
+                            val initY = disp.location.y.toFloat()
+                            val pdc   = disp.persistentDataContainer
+                            pdc.set(keyInitDy,             PersistentDataType.FLOAT,  initY)
+                            pdc.set(keyFluctuateAmplitude, PersistentDataType.DOUBLE, amplitude)
+                            // 固定速度，也可以扩展为第四个参数
+                            pdc.set(keyFluctuateSpeed,     PersistentDataType.DOUBLE, speed)
+                            pdc.set(keyFluctuateAngle,     PersistentDataType.DOUBLE, 0.0)
+                        }
+
+                        // 启动每 tick 更新一次的任务，实现上下浮动
+                        val task = object : BukkitRunnable() {
+                            override fun run() {
+                                displays.forEach { disp ->
+                                    val pdc   = disp.persistentDataContainer
+                                    val initY = pdc.get(keyInitDy,             PersistentDataType.FLOAT)!!
+                                    val amp   = pdc.get(keyFluctuateAmplitude, PersistentDataType.DOUBLE)!!
+                                    val spd   = pdc.get(keyFluctuateSpeed,     PersistentDataType.DOUBLE)!!
+                                    // 更新角度
+                                    val angle = pdc.get(keyFluctuateAngle,     PersistentDataType.DOUBLE)!! + spd
+                                    pdc.set(keyFluctuateAngle, PersistentDataType.DOUBLE, angle)
+
+                                    // 计算新 Y
+                                    val newY = initY + amp * kotlin.math.sin(angle)
+
+                                    // 传送实体到新坐标
+                                    val loc = disp.location.clone()
+                                    loc.y = newY
+                                    disp.teleport(loc)
+                                }
+                            }
+                        }.runTaskTimer(plugin, 0L, 1L)
+
+                        fluctuationTasks[id] = task
+                        sender.sendMessage("§a模型 '$id' 已开始以幅度 $amplitude 做垂直浮动。")
+                        return true
+                    }
                     else -> return usage(sender)
                 }
 
@@ -308,7 +381,7 @@ class ModelCommand(
                         .distinct()
                         .filter { it.startsWith(args[1], ignoreCase = true) }
                 }
-                "block" -> listOf("render", "rotate")
+                "block" -> listOf("render", "rotate","fluctuate")
                     .filter { it.startsWith(args[1].lowercase()) }
                 else -> emptyList()
             }
@@ -319,7 +392,7 @@ class ModelCommand(
                 "remove"-> emptyList()
                 "list" -> emptyList()
                 "block" -> when (args[1].lowercase()) {
-                    "render", "rotate" -> schemDir
+                    "render", "rotate","fluctuate" -> schemDir
                     .listFiles { f -> f.extension == "schem" }
                     ?.map { it.nameWithoutExtension }
                     ?.filter { it.startsWith(args[2]) }
@@ -341,6 +414,7 @@ class ModelCommand(
         sender.sendMessage("§a/model list §7列出所有已加载的外部模型")
         sender.sendMessage("§a/model block render <name> [scale] [rotX] [rotY] [rotZ] §7渲染shcem（需要安装worldedit插件）")
         sender.sendMessage("§a/model block rotate <name> [speed] §7旋转block模型")
+        sender.sendMessage("§a/model block rotate <name> [fluctuate] [speed] §7上下浮动block模型")
         sender.sendMessage("§a/model help §7显示此帮助")
 
         return true
