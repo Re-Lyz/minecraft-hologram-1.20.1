@@ -11,12 +11,13 @@ import org.bukkit.block.data.BlockData
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display.Brightness
 import org.bukkit.Bukkit
+import org.bukkit.entity.Marker
 
 import org.joml.Matrix4f
 
 import java.io.File
 import java.nio.file.Files
-
+import java.util.UUID
 
 object SchematicBlockRenderer {
     /**
@@ -63,6 +64,11 @@ object SchematicBlockRenderer {
             it.yaw = 0f
             it.pitch = 0f
         }
+        val baseTag = schem.nameWithoutExtension
+        val uniqueTag = "$baseTag${UUID.randomUUID()}"
+        val marker = world.spawn(markerLoc, Marker::class.java)
+        marker.addScoreboardTag(baseTag)
+        marker.addScoreboardTag(uniqueTag)
 
         // 4. 预计算旋转三角
         val radX = Math.toRadians(rotX.toDouble()).toFloat()
@@ -128,7 +134,9 @@ object SchematicBlockRenderer {
                     display.brightness = Brightness(15, 15)
 
                     // 打 tag
-                    display.addScoreboardTag(schem.nameWithoutExtension)
+                    display.addScoreboardTag(baseTag)
+                    display.addScoreboardTag(uniqueTag)
+
                     count++
                 }
             }
@@ -136,7 +144,4 @@ object SchematicBlockRenderer {
 
         return count
     }
-
-
-
 }
