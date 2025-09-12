@@ -51,7 +51,7 @@ object SchematicBlockRenderer {
         val world = originLoc.world
             ?: throw IllegalArgumentException("World 为空")
 
-        // 2. 计算几何中心
+        // 2. 计算几何中心 TODO: 奇数偶数情况需要分类讨论
         val min = region.minimumPoint
         val max = region.maximumPoint
         val centerX = (min.x + max.x - 1) / 2.0
