@@ -80,9 +80,9 @@ object SchematicBlockRenderer {
 
         // 5. 遍历所有方块，Spawn 并设置 transformation + block_state
         var count = 0
-        for (x in min.getX() until max.getX()) {
-            for (y in min.getY() until max.getY()) {
-                for (z in min.getZ() until max.getZ()) {
+        for (x in min.x..max.x) {
+            for (y in min.y..max.y) {
+                for (z in min.z..max.z) {
                     val weState = clipboard.getBlock(BlockVector3.at(x, y, z))
                     if (weState.blockType.material.isAir()) continue
 
